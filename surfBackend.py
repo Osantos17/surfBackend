@@ -30,3 +30,5 @@ def fetch_surf(lat, lng):
         print(f"Error: {response.status_code}")
         
 fetch_surf(37.488897, -122.466919)
+
+

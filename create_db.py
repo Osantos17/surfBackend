@@ -15,7 +15,7 @@ def create_db():
         )
         cursor = conn.cursor()
 
-        # Create locations table
+        #locations table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS locations (
                 id SERIAL PRIMARY KEY,
@@ -25,7 +25,7 @@ def create_db():
             )
         ''')
 
-        # Create surf_data table
+        #surf_data table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS surf_data (
                 id SERIAL PRIMARY KEY,
@@ -46,6 +46,18 @@ def create_db():
                 waterTemp_F FLOAT
             )
         ''')
+        
+        # Tide_data table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS tide_data (
+                id SERIAL PRIMARY KEY,
+                location_id INT REFERENCES locations(id),
+                tide_time VARCHAR(10),
+                tide_height FLOAT,
+                tide_type VARCHAR(10),
+                tide_datetime TIMESTAMP
+            )
+        ''')
 
         conn.commit()
         cursor.close()
@@ -63,6 +75,7 @@ def fetch_surf_data(lat, lng):
         'key': api_key,
         'format': 'json',
         'q': f'{lat},{lng}',
+        'tide': 'yes',
     }
 
     response = requests.get(base_url, params=params)
@@ -92,6 +105,14 @@ def insert_surf_data(location_id, data):
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         '''
+        
+        insert_tide_query = '''
+        INSERT INTO tide_data (
+            location_id, tide_time, tide_height_mt, tide_type, tide_date
+        )
+        VALUES (%s, %s, %s, %s, %s)
+        '''
+
 
         # Loop through all dates in the weather data
         for weather_data in data['data']['weather']:
@@ -119,6 +140,17 @@ def insert_surf_data(location_id, data):
                     )
 
                     cursor.execute(insert_query, record)
+                    
+            if 'tides' in weather_data:
+                for tide_event in weather_data['tides'][0]['tide_data']:
+                    tide_record = (
+                        location_id,
+                        tide_event['tideTime'],
+                        tide_event['tideHeight_mt'],
+                        tide_event['tide_type'],
+                        tide_event['tideDateTime']
+                    )
+                    cursor.execute(insert_tide_query, tide_record)
 
         conn.commit()
         cursor.close()

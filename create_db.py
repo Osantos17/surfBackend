@@ -2,20 +2,26 @@ import psycopg2
 import requests
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv('config.env')
 
-def create_db():
+def get_db_connection():
+    """Establish a database connection."""
+    return psycopg2.connect(
+        dbname="surf_forecast",
+        user="orlandosantos",
+        host="localhost",
+        port="5432"
+    )
+
+def create_db() -> None:
+    """Create the database and necessary tables."""
     try:
-        conn = psycopg2.connect(
-            dbname="surf_forecast",
-            user="orlandosantos",
-            host="localhost",
-            port="5432"
-        )
+        conn = get_db_connection()
         cursor = conn.cursor()
 
-        #locations table
+        # Create locations table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS locations (
                 id SERIAL PRIMARY KEY,
@@ -25,12 +31,12 @@ def create_db():
             )
         ''')
 
-        #surf_data table
+        # Create surf_data table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS surf_data (
                 id SERIAL PRIMARY KEY,
                 location_id INT REFERENCES locations(id),
-                date DATE NOT NULL,
+                date VARCHAR(20) NOT NULL,
                 sunrise VARCHAR(10),
                 sunset VARCHAR(10),
                 time VARCHAR(10),
@@ -47,28 +53,29 @@ def create_db():
             )
         ''')
         
-        # Tide_data table
+        # Create tide_data table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS tide_data (
                 id SERIAL PRIMARY KEY,
                 location_id INT REFERENCES locations(id),
                 tide_time VARCHAR(10),
-                tide_height FLOAT,
+                tide_height_mt FLOAT,
                 tide_type VARCHAR(10),
-                tide_datetime TIMESTAMP
+                tide_date TIMESTAMP
             )
         ''')
 
         conn.commit()
-        cursor.close()
-        conn.close()
-
         print("Database and tables created successfully!")
 
     except Exception as e:
         print(f"Error creating database: {e}")
+    finally:
+        cursor.close()
+        conn.close()
 
-def fetch_surf_data(lat, lng):
+def fetch_surf_data(lat: float, lng: float) -> dict:
+    """Fetch surf data from the API."""
     api_key = os.getenv('API_KEY')
     base_url = "http://api.worldweatheronline.com/premium/v1/marine.ashx"
     params = {
@@ -86,15 +93,24 @@ def fetch_surf_data(lat, lng):
         print(f"Error fetching data: {response.status_code}")
         return None
 
-def insert_surf_data(location_id, data):
+def convert_to_12hr_format(time_str: str) -> str:
+    """Convert time from 24-hour to 12-hour format."""
+    hour = int(time_str) // 100
+    am_pm = "AM" if hour < 12 else "PM"
+    hour = hour if hour <= 12 else hour - 12
+    hour = 12 if hour == 0 else hour  # Handle midnight and noon
+    return f"{hour}{am_pm}"
+
+def insert_surf_data(location_id: int, data: dict) -> None:
+    """Insert surf and tide data into the database."""
     try:
-        conn = psycopg2.connect(
-            dbname="surf_forecast",
-            user="orlandosantos",
-            host="localhost",
-            port="5432"
-        )
+        conn = get_db_connection()
         cursor = conn.cursor()
+
+        # Clear existing data in the tables before inserting new data
+        cursor.execute('DELETE FROM surf_data WHERE location_id = %s', (location_id,))
+        cursor.execute('DELETE FROM tide_data WHERE location_id = %s', (location_id,))
+        print(f"Deleted existing surf data and tide data for location ID: {location_id}")
 
         insert_query = '''
             INSERT INTO surf_data (
@@ -107,26 +123,29 @@ def insert_surf_data(location_id, data):
         '''
         
         insert_tide_query = '''
-        INSERT INTO tide_data (
-            location_id, tide_time, tide_height_mt, tide_type, tide_date
-        )
-        VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO tide_data (
+                location_id, tide_time, tide_height_mt, tide_type, tide_date
+            )
+            VALUES (%s, %s, %s, %s, %s)
         '''
 
-
-        # Loop through all dates in the weather data
         for weather_data in data['data']['weather']:
             astronomy_data = weather_data['astronomy'][0]
             selected_hours = ['300', '600', '900', '1200', '1500', '1800', '2100'] 
+            formatted_date = weather_data['date']  # This includes the year, you might want to format it
+
+            # If you want to extract just month and day:
+            month_day = datetime.strptime(formatted_date, '%Y-%m-%d').strftime('%m-%d')
 
             for hourly_data in weather_data['hourly']:
                 if hourly_data['time'] in selected_hours:
+                    time_12hr = convert_to_12hr_format(hourly_data['time'])
                     record = (
                         location_id,
-                        weather_data['date'],
+                        month_day,  # Use formatted date here
                         astronomy_data['sunrise'],
                         astronomy_data['sunset'],
-                        hourly_data['time'],
+                        time_12hr,
                         hourly_data['tempF'],
                         hourly_data['windspeedMiles'],
                         hourly_data['winddirDegree'],
@@ -140,7 +159,7 @@ def insert_surf_data(location_id, data):
                     )
 
                     cursor.execute(insert_query, record)
-                    
+
             if 'tides' in weather_data:
                 for tide_event in weather_data['tides'][0]['tide_data']:
                     tide_record = (
@@ -148,43 +167,39 @@ def insert_surf_data(location_id, data):
                         tide_event['tideTime'],
                         tide_event['tideHeight_mt'],
                         tide_event['tide_type'],
-                        tide_event['tideDateTime']
+                        datetime.fromisoformat(tide_event['tideDateTime'])  # Assuming this is ISO format
                     )
                     cursor.execute(insert_tide_query, tide_record)
 
         conn.commit()
-        cursor.close()
-        conn.close()
-
         print("Surf data inserted successfully!")
 
     except Exception as e:
         print(f"Error inserting surf data: {e}")
+    finally:
+        cursor.close()
+        conn.close()
 
-# Example usage
+
 if __name__ == "__main__":
-    create_db()  # Create the database and tables
+    create_db()
 
     # Connect to the database to retrieve existing locations
-    conn = psycopg2.connect(
-        dbname="surf_forecast",
-        user="orlandosantos",
-        host="localhost",
-        port="5432"
-    )
-    cursor = conn.cursor()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-    # Fetch all locations from the locations table
-    cursor.execute('SELECT id, latitude, longitude FROM locations')
-    locations = cursor.fetchall()
+        cursor.execute('SELECT id, latitude, longitude FROM locations')
+        locations = cursor.fetchall()
 
-    for location in locations:
-        location_id, lat, lng = location
-        # Fetch the surf data for this location
-        surf_data = fetch_surf_data(lat, lng)
-        if surf_data:
-            insert_surf_data(location_id, surf_data)
+        for location in locations:
+            location_id, lat, lng = location
+            surf_data = fetch_surf_data(lat, lng)
+            if surf_data:
+                insert_surf_data(location_id, surf_data)
 
-    conn.commit()
-    cursor.close()
-    conn.close()
+    except Exception as e:
+        print(f"Error connecting to database: {e}")
+    finally:
+        cursor.close()
+        conn.close()

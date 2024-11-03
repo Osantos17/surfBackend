@@ -7,154 +7,135 @@ app = Flask(__name__)
 CORS(app)
 
 def get_db_connection():
-    conn = psycopg2.connect(
+    return psycopg2.connect(
         dbname="surf_forecast",
         user="orlandosantos",
         host='localhost',
         port='5432'
     )
-    return conn
 
 def serialize_time(value):
     if isinstance(value, time):
-        return value.strftime('%H:%M:%S') 
+        return value.strftime('%H:%M')
     return value
 
-@app.route('/locations', defaults={'location_id': None}, methods=['GET'])
-@app.route('/locations/<int:location_id>', methods=['GET'])
-@app.route('/locations/tide-data', methods=['GET'])
-@app.route('/locations/combined-data', methods=['GET'])
-def get_data(location_id=None):
+def serialize_time_12hr(value):
+    if isinstance(value, time):
+        return value.strftime('%I %p').lstrip('0')
+    return value
+
+def serialize_date(value):
+    if isinstance(value, datetime):
+        return value.strftime('%a %b %d')
+    return value
+
+@app.route('/locations', methods=['GET'])
+def get_locations():
+    """Fetches all locations."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, location_name, latitude, longitude FROM locations')
+    locations = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    return jsonify([
+        {
+            'id': row[0],
+            'location_name': row[1],
+            'latitude': row[2],
+            'longitude': row[3]
+        } for row in locations
+    ])
+
+@app.route('/locations/combined-data/<int:location_id>', methods=['GET'])
+def get_combined_data_by_id(location_id):
+    """Fetches combined surf and tide data for a given location ID."""
+    conn = None
+    cursor = None  # Initialize cursor variable
     try:
+        include_surf = request.args.get('include_surf', 'true').lower() == 'true'
+        include_tide = request.args.get('include_tide', 'true').lower() == 'true'
+
         conn = get_db_connection()
         cursor = conn.cursor()
-        
-        if location_id is None and request.path == '/locations':
-            cursor.execute('SELECT id, location_name, latitude, longitude FROM locations ORDER BY id')
-            locations = cursor.fetchall()
-            
-            locations_list = [
-                {'id': loc[0], 'name': loc[1], 'latitude': loc[2], 'longitude': loc[3]}
-                for loc in locations
-            ]
-            response = jsonify(locations_list)
-        
-        elif location_id is not None:
-            cursor.execute('SELECT * FROM surf_data WHERE location_id = %s', (location_id,))
+
+        # Fetch location data
+        cursor.execute('''
+            SELECT loc.id, loc.location_name, loc.latitude, loc.longitude
+            FROM locations loc
+            WHERE loc.id = %s
+        ''', (location_id,))
+        location = cursor.fetchone()
+
+        if not location:
+            return jsonify({'error': 'Location not found'}), 404
+
+        combined_data = {
+            'location_id': location[0],
+            'location_name': location[1],
+            'latitude': location[2],
+            'longitude': location[3],
+        }
+
+        # Fetch surf data if requested
+        if include_surf:
+            cursor.execute('''
+                SELECT id, location_id, date, sunrise, sunset, time, tempF, windspeedMiles, winddirDegree, winddir16point, weatherDesc, swellHeight_ft, swelldir, swelldir16point, swellperiod_secs
+                FROM surf_data WHERE location_id = %s
+            ''', (location_id,))
             surf_data = cursor.fetchall()
-            
-            surf_data_list = [
+            combined_data['surf_data'] = [
                 {
                     'id': row[0],
                     'location_id': row[1],
                     'date': row[2],
-                    'sunrise': serialize_time(row[3]),   
-                    'sunset': serialize_time(row[4]),    
-                    'time': serialize_time(row[5]),      
+                    'sunrise': serialize_time(row[3]),
+                    'sunset': serialize_time(row[4]),
+                    'time': serialize_time(row[5]),
                     'tempF': row[6],
                     'windspeedMiles': row[7],
                     'winddirDegree': row[8],
                     'winddir16point': row[9],
                     'weatherDesc': row[10],
                     'swellHeight_ft': row[11],
-                    'swellDir': row[12],
-                    'swellDir16Point': row[13],
-                    'swellPeriod_secs': row[14],
-                    'waterTemp_F': row[15]
+                    'swelldir' :row[12],
+                    'swelldir16point' :row[13],
+                    'swellperiod_secs' :row[14],
                 }
                 for row in surf_data
             ]
-            response = jsonify(surf_data_list)
-        
-        elif request.path == '/locations/tide-data':
-            cursor.execute('SELECT * FROM tide_data')
+
+        # Fetch tide data if requested
+        if include_tide:
+            cursor.execute('''
+                SELECT id, location_id, tide_time, tide_height_mt, tide_type, tide_date
+                FROM tide_data WHERE location_id = %s
+            ''', (location_id,))
             tide_data = cursor.fetchall()
-            
-            tide_data_list = [
+            combined_data['tide_data'] = [
                 {
                     'id': row[0],
                     'location_id': row[1],
                     'tide_time': serialize_time(row[2]),
                     'tide_height': row[3],
-                    'tide_type': row[4]
+                    'tide_type': row[4],
+                    'tide_date': row[5]
                 }
                 for row in tide_data
             ]
-            response = jsonify(tide_data_list)
 
-        elif request.path == '/locations/combined-data':
-            cursor.execute('SELECT id, location_name, latitude, longitude FROM locations ORDER BY id')
-            locations = cursor.fetchall()
+        return jsonify(combined_data)
 
-            combined_data = []
-
-            for loc in locations:
-                loc_id = loc[0]
-                loc_name = loc[1]
-                loc_latitude = loc[2]
-                loc_longitude = loc[3]
-
-                # Fetch surf data for the current location
-                cursor.execute('SELECT * FROM surf_data WHERE location_id = %s', (loc_id,))
-                surf_data = cursor.fetchall()
-
-                surf_data_list = [
-                    {
-                        'id': row[0],
-                        'location_id': row[1],
-                        'date': row[2],
-                        'sunrise': row[3],
-                        'sunset': row[4],
-                        'time': row[5],
-                        'tempF': row[6],
-                        'windspeedMiles': row[7],
-                        'winddirDegree': row[8],
-                        'winddir16point': row[9],
-                        'weatherDesc': row[10],
-                        'swellHeight_ft': row[11],
-                        'swellDir': row[12],
-                        'swellDir16Point': row[13],
-                        'swellPeriod_secs': row[14],
-                        'waterTemp_F': row[15]
-                    }
-                    for row in surf_data
-                ]
-
-                # Fetch tide data for the current location
-                cursor.execute('SELECT * FROM tide_data WHERE location_id = %s', (loc_id,))
-                tide_data = cursor.fetchall()
-
-                tide_data_list = [
-                    {
-                        'id': row[0],
-                        'location_id': row[1],
-                        'tide_time': serialize_time(row[2]),
-                        'tide_height': row[3],
-                        'tide_type': row[4],
-                        'tide_date': (row[5]),
-                    }
-                    for row in tide_data
-                ]
-
-                # Append combined data for the current location
-                combined_data.append({
-                    'location_id': loc_id,
-                    'location_name': loc_name,
-                    'latitude': loc_latitude,
-                    'longitude': loc_longitude,
-                    'surf_data': surf_data_list,
-                    'tide_data': tide_data_list
-                })
-
-            response = jsonify(combined_data)  # Add this line to ensure response is set
-
-        cursor.close()
-        conn.close()
-        return response  # Return the response here
-    
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
+    finally:
+        # Ensure cursor and connection are closed properly
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
+            
 if __name__ == "__main__":
     app.run(debug=True)

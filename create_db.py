@@ -61,9 +61,10 @@ def create_db() -> None:
                 tide_time VARCHAR(10),
                 tide_height_mt FLOAT,
                 tide_type VARCHAR(10),
-                tide_date TIMESTAMP
+                tide_date DATE  -- Change TIMESTAMP to DATE
             )
         ''')
+
 
         conn.commit()
         print("Database and tables created successfully!")
@@ -132,17 +133,16 @@ def insert_surf_data(location_id: int, data: dict) -> None:
         for weather_data in data['data']['weather']:
             astronomy_data = weather_data['astronomy'][0]
             selected_hours = ['300', '600', '900', '1200', '1500', '1800', '2100'] 
-            formatted_date = weather_data['date']  # This includes the year, you might want to format it
 
-            # If you want to extract just month and day:
-            month_day = datetime.strptime(formatted_date, '%Y-%m-%d').strftime('%m-%d')
+            # Use the full date in YYYY-MM-DD format
+            formatted_date = weather_data['date']  # This should already be in the correct format (YYYY-MM-DD)
 
             for hourly_data in weather_data['hourly']:
                 if hourly_data['time'] in selected_hours:
                     time_12hr = convert_to_12hr_format(hourly_data['time'])
                     record = (
                         location_id,
-                        month_day,  # Use formatted date here
+                        formatted_date,  # Use formatted_date here instead of month_day
                         astronomy_data['sunrise'],
                         astronomy_data['sunset'],
                         time_12hr,
@@ -160,6 +160,7 @@ def insert_surf_data(location_id: int, data: dict) -> None:
 
                     cursor.execute(insert_query, record)
 
+
             if 'tides' in weather_data:
                 for tide_event in weather_data['tides'][0]['tide_data']:
                     tide_record = (
@@ -167,9 +168,10 @@ def insert_surf_data(location_id: int, data: dict) -> None:
                         tide_event['tideTime'],
                         tide_event['tideHeight_mt'],
                         tide_event['tide_type'],
-                        datetime.fromisoformat(tide_event['tideDateTime'])  # Assuming this is ISO format
+                        datetime.fromisoformat(tide_event['tideDateTime']).date()  # Use .date() to extract only the date
                     )
                     cursor.execute(insert_tide_query, tide_record)
+
 
         conn.commit()
         print("Surf data inserted successfully!")

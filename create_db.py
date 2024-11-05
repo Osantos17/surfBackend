@@ -2,7 +2,7 @@ import psycopg2
 import requests
 import os
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 
 load_dotenv('config.env')
 
@@ -52,7 +52,7 @@ def create_db() -> None:
                 waterTemp_F FLOAT
             )
         ''')
-        
+
         # Create tide_data table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS tide_data (
@@ -61,16 +61,51 @@ def create_db() -> None:
                 tide_time VARCHAR(10),
                 tide_height_mt FLOAT,
                 tide_type VARCHAR(10),
-                tide_date DATE  -- Change TIMESTAMP to DATE
+                tide_date DATE
             )
         ''')
 
+        # Create boundary_tide_data table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS boundary_tide_data (
+                id SERIAL PRIMARY KEY,
+                location_id INT REFERENCES locations(id),
+                tide_time VARCHAR(10),
+                tide_height_mt FLOAT,
+                tide_type VARCHAR(10),
+                tide_date DATE
+            )
+        ''')
 
         conn.commit()
         print("Database and tables created successfully!")
 
     except Exception as e:
         print(f"Error creating database: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+def move_last_tide_to_boundary(location_id: int) -> None:
+    """Move the last tide entry of the previous day from tide_data to boundary_tide_data."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Get last tide entry of the previous day
+        cursor.execute('''
+            INSERT INTO boundary_tide_data (location_id, tide_time, tide_height_mt, tide_type, tide_date)
+            SELECT location_id, tide_time, tide_height_mt, tide_type, tide_date
+            FROM tide_data
+            WHERE location_id = %s AND tide_date = CURRENT_DATE - INTERVAL '1 day'
+            ORDER BY tide_time DESC LIMIT 1
+        ''', (location_id,))
+
+        conn.commit()
+        print("Moved last tide entry to boundary_tide_data.")
+
+    except Exception as e:
+        print(f"Error moving last tide entry: {e}")
     finally:
         cursor.close()
         conn.close()
@@ -134,15 +169,14 @@ def insert_surf_data(location_id: int, data: dict) -> None:
             astronomy_data = weather_data['astronomy'][0]
             selected_hours = ['300', '600', '900', '1200', '1500', '1800', '2100'] 
 
-            # Use the full date in YYYY-MM-DD format
-            formatted_date = weather_data['date']  # This should already be in the correct format (YYYY-MM-DD)
+            formatted_date = weather_data['date']
 
             for hourly_data in weather_data['hourly']:
                 if hourly_data['time'] in selected_hours:
                     time_12hr = convert_to_12hr_format(hourly_data['time'])
                     record = (
                         location_id,
-                        formatted_date,  # Use formatted_date here instead of month_day
+                        formatted_date,
                         astronomy_data['sunrise'],
                         astronomy_data['sunset'],
                         time_12hr,
@@ -160,7 +194,6 @@ def insert_surf_data(location_id: int, data: dict) -> None:
 
                     cursor.execute(insert_query, record)
 
-
             if 'tides' in weather_data:
                 for tide_event in weather_data['tides'][0]['tide_data']:
                     tide_record = (
@@ -168,10 +201,9 @@ def insert_surf_data(location_id: int, data: dict) -> None:
                         tide_event['tideTime'],
                         tide_event['tideHeight_mt'],
                         tide_event['tide_type'],
-                        datetime.fromisoformat(tide_event['tideDateTime']).date()  # Use .date() to extract only the date
+                        datetime.fromisoformat(tide_event['tideDateTime']).date()
                     )
                     cursor.execute(insert_tide_query, tide_record)
-
 
         conn.commit()
         print("Surf data inserted successfully!")
@@ -181,7 +213,6 @@ def insert_surf_data(location_id: int, data: dict) -> None:
     finally:
         cursor.close()
         conn.close()
-
 
 if __name__ == "__main__":
     create_db()
@@ -199,6 +230,9 @@ if __name__ == "__main__":
             surf_data = fetch_surf_data(lat, lng)
             if surf_data:
                 insert_surf_data(location_id, surf_data)
+
+            # Move last tide entry to boundary for each location
+            move_last_tide_to_boundary(location_id)
 
     except Exception as e:
         print(f"Error connecting to database: {e}")

@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import psycopg2
-from datetime import datetime, time
+from datetime import datetime, timedelta, time
 
 app = Flask(__name__)
 CORS(app)
@@ -136,6 +136,78 @@ def get_combined_data_by_id(location_id):
             cursor.close()
         if conn is not None:
             conn.close()
-            
+
+@app.route('/api/combined-tide-data/<int:location_id>', methods=['GET'])
+def get_combined_tide_data(location_id):
+    """Fetches combined tide data from boundary_tide_data and tide_data for a given location ID."""
+    conn = None
+    cursor = None
+    try:
+        # Calculate date range for the 5-day period
+        today = datetime.now()
+        four_days_ago = today - timedelta(days=4)  # One extra day before the 3-day period
+        one_day_after = today + timedelta(days=1)  # One extra day after the 3-day period
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Fetch tide data from tide_data table for the specific location
+        cursor.execute('''
+            SELECT id, location_id, tide_time, tide_height_mt, tide_type, tide_date
+            FROM tide_data
+            WHERE location_id = %s AND tide_date BETWEEN %s AND %s
+        ''', (location_id, four_days_ago.date(), one_day_after.date()))
+        
+        tide_data = cursor.fetchall()
+        tide_data_list = [
+            {
+                'id': row[0],
+                'location_id': row[1],
+                'tide_time': serialize_time(row[2]),
+                'tide_height': row[3],
+                'tide_type': row[4],
+                'tide_date': row[5]
+            }
+            for row in tide_data
+        ]
+
+        # Fetch boundary tide data from boundary_tide_data table for the specific location
+        cursor.execute('''
+            SELECT id, location_id, tide_time, tide_height_mt, tide_type, tide_date
+            FROM boundary_tide_data
+            WHERE location_id = %s AND tide_date BETWEEN %s AND %s
+        ''', (location_id, four_days_ago.date(), one_day_after.date()))
+        
+        boundary_tide_data = cursor.fetchall()
+        boundary_tide_data_list = [
+            {
+                'id': row[0],
+                'location_id': row[1],
+                'tide_time': serialize_time(row[2]),
+                'tide_height': row[3],
+                'tide_type': row[4],
+                'tide_date': row[5]
+            }
+            for row in boundary_tide_data
+        ]
+
+        # Combine the tide data from both tables
+        combined_tide_data = {
+            'tide_data': tide_data_list,
+            'boundary_tide_data': boundary_tide_data_list
+        }
+
+        return jsonify(combined_tide_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        # Ensure cursor and connection are closed properly
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
+
 if __name__ == "__main__":
     app.run(debug=True)

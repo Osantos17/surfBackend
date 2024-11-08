@@ -3,6 +3,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+from db import move_last_tide_to_boundary 
 
 load_dotenv('config.env')
 
@@ -65,18 +66,6 @@ def create_db() -> None:
             )
         ''')
 
-        # Create boundary_tide_data table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS boundary_tide_data (
-                id SERIAL PRIMARY KEY,
-                location_id INT REFERENCES locations(id),
-                tide_time VARCHAR(10),
-                tide_height_mt FLOAT,
-                tide_type VARCHAR(10),
-                tide_date DATE
-            )
-        ''')
-
         conn.commit()
         print("Database and tables created successfully!")
 
@@ -92,20 +81,21 @@ def move_last_tide_to_boundary(location_id: int) -> None:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Get last tide entry of the previous day
+        # Ensure location_id is passed or defined
         cursor.execute('''
             INSERT INTO boundary_tide_data (location_id, tide_time, tide_height_mt, tide_type, tide_date)
-            SELECT location_id, tide_time, tide_height_mt, tide_type, tide_date
+            SELECT location_id, TO_CHAR(TO_TIMESTAMP(tide_time::text, 'HH12:MI AM'), 'HH24:MI'), tide_height_mt, tide_type, tide_date
             FROM tide_data
             WHERE location_id = %s AND tide_date = CURRENT_DATE - INTERVAL '1 day'
             ORDER BY tide_time DESC LIMIT 1
+            ON CONFLICT (location_id, tide_date, tide_time) DO NOTHING;
         ''', (location_id,))
 
         conn.commit()
-        print("Moved last tide entry to boundary_tide_data.")
+        print(f"Moved last tide entry to boundary_tide_data for location {location_id}.")
 
     except Exception as e:
-        print(f"Error moving last tide entry: {e}")
+        print(f"Error moving last tide entry for location {location_id}: {e}")
     finally:
         cursor.close()
         conn.close()
@@ -113,6 +103,10 @@ def move_last_tide_to_boundary(location_id: int) -> None:
 def fetch_surf_data(lat: float, lng: float) -> dict:
     """Fetch surf data from the API."""
     api_key = os.getenv('API_KEY')
+    if not api_key:
+        print("API key not found in environment variables.")
+        return None
+
     base_url = "http://api.worldweatheronline.com/premium/v1/marine.ashx"
     params = {
         'key': api_key,
@@ -128,15 +122,7 @@ def fetch_surf_data(lat: float, lng: float) -> dict:
     else:
         print(f"Error fetching data: {response.status_code}")
         return None
-
-def convert_to_12hr_format(time_str: str) -> str:
-    """Convert time from 24-hour to 12-hour format."""
-    hour = int(time_str) // 100
-    am_pm = "AM" if hour < 12 else "PM"
-    hour = hour if hour <= 12 else hour - 12
-    hour = 12 if hour == 0 else hour  # Handle midnight and noon
-    return f"{hour}{am_pm}"
-
+    
 def insert_surf_data(location_id: int, data: dict) -> None:
     """Insert surf and tide data into the database."""
     try:
@@ -173,13 +159,12 @@ def insert_surf_data(location_id: int, data: dict) -> None:
 
             for hourly_data in weather_data['hourly']:
                 if hourly_data['time'] in selected_hours:
-                    time_12hr = convert_to_12hr_format(hourly_data['time'])
                     record = (
                         location_id,
                         formatted_date,
                         astronomy_data['sunrise'],
                         astronomy_data['sunset'],
-                        time_12hr,
+                        hourly_data['time'],  # Now directly using time in 24-hour format
                         hourly_data['tempF'],
                         hourly_data['windspeedMiles'],
                         hourly_data['winddirDegree'],
@@ -196,9 +181,10 @@ def insert_surf_data(location_id: int, data: dict) -> None:
 
             if 'tides' in weather_data:
                 for tide_event in weather_data['tides'][0]['tide_data']:
+                    tide_time_24hr = datetime.strptime(tide_event['tideTime'], '%I:%M %p').strftime('%H:%M')  # Convert time to 24-hour format
                     tide_record = (
                         location_id,
-                        tide_event['tideTime'],
+                        tide_time_24hr,
                         tide_event['tideHeight_mt'],
                         tide_event['tide_type'],
                         datetime.fromisoformat(tide_event['tideDateTime']).date()
@@ -217,7 +203,6 @@ def insert_surf_data(location_id: int, data: dict) -> None:
 if __name__ == "__main__":
     create_db()
 
-    # Connect to the database to retrieve existing locations
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -231,7 +216,6 @@ if __name__ == "__main__":
             if surf_data:
                 insert_surf_data(location_id, surf_data)
 
-            # Move last tide entry to boundary for each location
             move_last_tide_to_boundary(location_id)
 
     except Exception as e:

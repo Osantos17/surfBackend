@@ -1,7 +1,8 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import psycopg2
-from datetime import datetime, timedelta, time
+from datetime import datetime,timedelta, time as time_type
+import time 
 
 app = Flask(__name__)
 CORS(app)
@@ -14,24 +15,29 @@ def get_db_connection():
         port='5432'
     )
 
+# Utility functions to serialize date and time
 def serialize_time(value):
-    if isinstance(value, time):
+    if isinstance(value, datetime):
         return value.strftime('%H:%M')
-    return value
-
-def serialize_time_12hr(value):
-    if isinstance(value, time):
-        return value.strftime('%I %p').lstrip('0')
+    elif isinstance(value, time_type):  # Use time_type to avoid conflict
+        return value.strftime('%H:%M')
+    elif isinstance(value, str):
+        try:
+            time_obj = datetime.strptime(value, '%H:%M')
+            return time_obj.strftime('%H:%M')
+        except ValueError:
+            try:
+                time_obj = datetime.strptime(value, '%I:%M %p')
+                return time_obj.strftime('%H:%M')
+            except ValueError:
+                return value
     return value
 
 def serialize_date(value):
-    if isinstance(value, datetime):
-        return value.strftime('%a %b %d')
-    return value
+    return value.strftime('%a %b %d') if isinstance(value, datetime) else value
 
 @app.route('/locations', methods=['GET'])
 def get_locations():
-    """Fetches all locations."""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('SELECT id, location_name, latitude, longitude FROM locations')
@@ -50,9 +56,8 @@ def get_locations():
 
 @app.route('/locations/combined-data/<int:location_id>', methods=['GET'])
 def get_combined_data_by_id(location_id):
-    """Fetches combined surf and tide data for a given location ID."""
-    conn = None
-    cursor = None  # Initialize cursor variable
+    """Fetches combined surf and tide data for a specific location."""
+    conn, cursor = None, None
     try:
         include_surf = request.args.get('include_surf', 'true').lower() == 'true'
         include_tide = request.args.get('include_tide', 'true').lower() == 'true'
@@ -62,9 +67,8 @@ def get_combined_data_by_id(location_id):
 
         # Fetch location data
         cursor.execute('''
-            SELECT loc.id, loc.location_name, loc.latitude, loc.longitude
-            FROM locations loc
-            WHERE loc.id = %s
+            SELECT id, location_name, latitude, longitude
+            FROM locations WHERE id = %s
         ''', (location_id,))
         location = cursor.fetchone()
 
@@ -78,10 +82,11 @@ def get_combined_data_by_id(location_id):
             'longitude': location[3],
         }
 
-        # Fetch surf data if requested
+        # Fetch and attach surf data
         if include_surf:
             cursor.execute('''
-                SELECT id, location_id, date, sunrise, sunset, time, tempF, windspeedMiles, winddirDegree, winddir16point, weatherDesc, swellHeight_ft, swelldir, swelldir16point, swellperiod_secs
+                SELECT id, location_id, date, sunrise, sunset, time, tempF, windspeedMiles, winddirDegree, 
+                       winddir16point, weatherDesc, swellHeight_ft, swelldir, swelldir16point, swellperiod_secs
                 FROM surf_data WHERE location_id = %s
             ''', (location_id,))
             surf_data = cursor.fetchall()
@@ -89,7 +94,7 @@ def get_combined_data_by_id(location_id):
                 {
                     'id': row[0],
                     'location_id': row[1],
-                    'date': row[2],
+                    'date': serialize_date(row[2]),
                     'sunrise': serialize_time(row[3]),
                     'sunset': serialize_time(row[4]),
                     'time': serialize_time(row[5]),
@@ -99,14 +104,14 @@ def get_combined_data_by_id(location_id):
                     'winddir16point': row[9],
                     'weatherDesc': row[10],
                     'swellHeight_ft': row[11],
-                    'swelldir' :row[12],
-                    'swelldir16point' :row[13],
-                    'swellperiod_secs' :row[14],
+                    'swelldir': row[12],
+                    'swelldir16point': row[13],
+                    'swellperiod_secs': row[14],
                 }
                 for row in surf_data
             ]
 
-        # Fetch tide data if requested
+        # Fetch and attach tide data
         if include_tide:
             cursor.execute('''
                 SELECT id, location_id, tide_time, tide_height_mt, tide_type, tide_date
@@ -120,7 +125,7 @@ def get_combined_data_by_id(location_id):
                     'tide_time': serialize_time(row[2]),
                     'tide_height': row[3],
                     'tide_type': row[4],
-                    'tide_date': row[5]
+                    'tide_date': serialize_date(row[5])
                 }
                 for row in tide_data
             ]
@@ -131,83 +136,60 @@ def get_combined_data_by_id(location_id):
         return jsonify({'error': str(e)}), 500
 
     finally:
-        # Ensure cursor and connection are closed properly
-        if cursor is not None:
-            cursor.close()
-        if conn is not None:
-            conn.close()
+        if cursor: cursor.close()
+        if conn: conn.close()
 
 @app.route('/api/combined-tide-data/<int:location_id>', methods=['GET'])
 def get_combined_tide_data(location_id):
-    """Fetches combined tide data from boundary_tide_data and tide_data for a given location ID."""
-    conn = None
-    cursor = None
+    """Fetches combined tide data from both tide_data and boundary_tide_data for a given location."""
+    conn, cursor = None, None
     try:
-        # Calculate date range for the 5-day period
         today = datetime.now()
-        four_days_ago = today - timedelta(days=4)  # One extra day before the 3-day period
-        one_day_after = today + timedelta(days=1)  # One extra day after the 3-day period
+        three_days_ago = today - timedelta(days=1)
+        two_days_after = today + timedelta(days=2)
 
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Fetch tide data from tide_data table for the specific location
+        # Fetch tide data for the date range from tide_data table
         cursor.execute('''
             SELECT id, location_id, tide_time, tide_height_mt, tide_type, tide_date
             FROM tide_data
             WHERE location_id = %s AND tide_date BETWEEN %s AND %s
-        ''', (location_id, four_days_ago.date(), one_day_after.date()))
+        ''', (location_id, three_days_ago.date(), two_days_after.date()))
         
         tide_data = cursor.fetchall()
-        tide_data_list = [
-            {
-                'id': row[0],
-                'location_id': row[1],
-                'tide_time': serialize_time(row[2]),
-                'tide_height': row[3],
-                'tide_type': row[4],
-                'tide_date': row[5]
-            }
-            for row in tide_data
-        ]
 
-        # Fetch boundary tide data from boundary_tide_data table for the specific location
+        # Fetch tide data from boundary_tide_data table for the same date range
         cursor.execute('''
             SELECT id, location_id, tide_time, tide_height_mt, tide_type, tide_date
             FROM boundary_tide_data
             WHERE location_id = %s AND tide_date BETWEEN %s AND %s
-        ''', (location_id, four_days_ago.date(), one_day_after.date()))
+        ''', (location_id, three_days_ago.date(), two_days_after.date()))
         
         boundary_tide_data = cursor.fetchall()
-        boundary_tide_data_list = [
+
+        # Format and combine tide data for JSON serialization
+        combined_data = [
             {
                 'id': row[0],
                 'location_id': row[1],
                 'tide_time': serialize_time(row[2]),
-                'tide_height': row[3],
+                'tide_height_mt': row[3],
                 'tide_type': row[4],
-                'tide_date': row[5]
-            }
-            for row in boundary_tide_data
+                'tide_date': serialize_date(row[5])
+            } for row in tide_data + boundary_tide_data
         ]
 
-        # Combine the tide data from both tables
-        combined_tide_data = {
-            'tide_data': tide_data_list,
-            'boundary_tide_data': boundary_tide_data_list
-        }
-
-        return jsonify(combined_tide_data)
+        return jsonify(combined_data)
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
     finally:
-        # Ensure cursor and connection are closed properly
-        if cursor is not None:
-            cursor.close()
-        if conn is not None:
-            conn.close()
+        if cursor: cursor.close()
+        if conn: conn.close()
+
 
 if __name__ == "__main__":
     app.run(debug=True)

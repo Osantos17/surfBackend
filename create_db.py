@@ -3,7 +3,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
-from db import move_last_tide_to_boundary 
+from db import move_last_tide_to_boundary
 
 load_dotenv('config.env')
 
@@ -84,7 +84,14 @@ def move_last_tide_to_boundary(location_id: int) -> None:
         # Ensure location_id is passed or defined
         cursor.execute('''
             INSERT INTO boundary_tide_data (location_id, tide_time, tide_height_mt, tide_type, tide_date)
-            SELECT location_id, TO_CHAR(TO_TIMESTAMP(tide_time::text, 'HH12:MI AM'), 'HH24:MI'), tide_height_mt, tide_type, tide_date
+            SELECT location_id, 
+                   CASE 
+                       WHEN tide_time = '12:00 AM' THEN '00:00'  -- Handle midnight as 00:00
+                       ELSE to_char(tide_time, 'HH24:MI')  -- Convert time to 24-hour format
+                   END AS tide_time_24hr,
+                   tide_height_mt, 
+                   tide_type, 
+                   tide_date
             FROM tide_data
             WHERE location_id = %s AND tide_date = CURRENT_DATE - INTERVAL '1 day'
             ORDER BY tide_time DESC LIMIT 1
@@ -100,6 +107,7 @@ def move_last_tide_to_boundary(location_id: int) -> None:
         cursor.close()
         conn.close()
 
+
 def fetch_surf_data(lat: float, lng: float) -> dict:
     """Fetch surf data from the API."""
     api_key = os.getenv('API_KEY')
@@ -108,11 +116,19 @@ def fetch_surf_data(lat: float, lng: float) -> dict:
         return None
 
     base_url = "http://api.worldweatheronline.com/premium/v1/marine.ashx"
+    
+    # Get today's date and the next two days
+    today = datetime.now().strftime('%Y-%m-%d')
+    next_day = (datetime.now() + timedelta(1)).strftime('%Y-%m-%d')
+    day_after_next = (datetime.now() + timedelta(2)).strftime('%Y-%m-%d')
+
+    # Assuming the API supports multiple days by passing a list of dates (check API documentation)
     params = {
         'key': api_key,
         'format': 'json',
         'q': f'{lat},{lng}',
         'tide': 'yes',
+        'date': f'{today},{next_day},{day_after_next}'  # Fetch data for today, next day, and the day after next
     }
 
     response = requests.get(base_url, params=params)
@@ -122,6 +138,7 @@ def fetch_surf_data(lat: float, lng: float) -> dict:
     else:
         print(f"Error fetching data: {response.status_code}")
         return None
+
     
 def insert_surf_data(location_id: int, data: dict) -> None:
     """Insert surf and tide data into the database."""

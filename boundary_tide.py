@@ -17,7 +17,7 @@ def get_db_connection():
 
 def fetch_historical_tide_data(lat: float, lng: float) -> dict:
     """Fetch historical tide data from the API for the previous day."""
-    print("Fetching tide data...")  # Add this line to see if the function is called.
+    print(f"Fetching tide data for latitude {lat} and longitude {lng}...")  # Add this line for clarity.
     
     # Get the API key from the environment variable
     api_key = os.getenv('API_KEY')
@@ -25,13 +25,10 @@ def fetch_historical_tide_data(lat: float, lng: float) -> dict:
         print("Error: API key not found in environment.")
         return None
     
-    base_url = "http://api.worldweatheronline.com/premium/v1/past-marine.ashx"
-    
+    base_url = "http://api.worldweatheronline.com/premium/v1/marine.ashx"
     
     # Get yesterday's date in the required format
     previous_day = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-    print(f"Previous day: {previous_day}")
-
     
     params = {
         'key': api_key,
@@ -44,8 +41,6 @@ def fetch_historical_tide_data(lat: float, lng: float) -> dict:
     response = requests.get(base_url, params=params)
     
     if response.status_code == 200:
-        print("API Response:")
-        print(response.json())  # Print the full response for debugging
         return response.json()
     else:
         print(f"Error fetching historical tide data: {response.status_code}")
@@ -59,15 +54,9 @@ def move_last_tide_to_boundary(location_id: int, lat: float, lng: float) -> None
             if 'data' in tide_data and 'weather' in tide_data['data']:
                 weather_data = tide_data['data']['weather'][0]
                 
-                # Log the weather data
-                print(f"Weather data: {weather_data}")
-                
                 # If there are tide entries, get the last one
                 if 'tides' in weather_data and weather_data['tides']:
                     last_tide_entry = weather_data['tides'][0]['tide_data'][-1]  # Last tide event of the day
-                    
-                    # Log the last tide entry
-                    print(f"Last tide entry: {last_tide_entry}")
                     
                     # Prepare data for insertion
                     tide_time = last_tide_entry['tideTime']
@@ -75,13 +64,16 @@ def move_last_tide_to_boundary(location_id: int, lat: float, lng: float) -> None
                     tide_type = last_tide_entry['tide_type']
                     tide_date = datetime.strptime(weather_data['date'], '%Y-%m-%d').date()
                     
-                    # Log the prepared data before inserting it
-                    print(f"Inserting data: location_id={location_id}, tide_time={tide_time}, tide_height_mt={tide_height_mt}, tide_type={tide_type}, tide_date={tide_date}")
-                    
                     conn = get_db_connection()
                     cursor = conn.cursor()
+
+                    # Delete all existing tide entries for the location and tide_date
+                    cursor.execute('''
+                        DELETE FROM boundary_tide_data
+                        WHERE location_id = %s AND tide_date = %s
+                    ''', (location_id, tide_date))
                     
-                    # Insert into boundary_tide_data
+                    # Insert the new tide data into boundary_tide_data
                     cursor.execute('''
                         INSERT INTO boundary_tide_data (
                             location_id, tide_time, tide_height_mt, tide_type, tide_date
@@ -89,7 +81,7 @@ def move_last_tide_to_boundary(location_id: int, lat: float, lng: float) -> None
                     ''', (location_id, tide_time, tide_height_mt, tide_type, tide_date))
                     
                     conn.commit()
-                    print("Last tide entry from previous day added to boundary_tide_data.")
+                    print(f"Tide data for location ID {location_id} replaced successfully.")
                 
             else:
                 print("No weather data or tides found in the response.")
@@ -97,15 +89,39 @@ def move_last_tide_to_boundary(location_id: int, lat: float, lng: float) -> None
             print("No tide data returned from API.")
                 
     except Exception as e:
-        print(f"Error moving last tide entry to boundary_tide_data: {e}")
+        print(f"Error moving tide entry to boundary_tide_data: {e}")
     finally:
         if 'cursor' in locals() and cursor:
             cursor.close()
         if 'conn' in locals() and conn:
             conn.close()
 
-# Example usage
-location_id = 1  # Set the location ID
-lat = 37.7749    # Set the latitude of the location
-lng = -122.4194  # Set the longitude of the location
-move_last_tide_to_boundary(location_id, lat, lng)
+def update_tide_data_for_all_locations():
+    """Fetch and update tide data for all locations in the locations table."""
+    try:
+        # Connect to the database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Fetch all locations (id, lat, lng) - update column name if necessary
+        cursor.execute('SELECT id, latitude, longitude FROM locations')
+        locations = cursor.fetchall()
+
+        # Iterate through all locations and update tide data
+        for location in locations:
+            location_id, lat, lng = location
+            move_last_tide_to_boundary(location_id, lat, lng)
+
+        print("Tide data update complete for all locations.")
+        
+    except Exception as e:
+        print(f"Error updating tide data for all locations: {e}")
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if 'conn' in locals() and conn:
+            conn.close()
+
+# Run the update for all locations
+update_tide_data_for_all_locations()
+

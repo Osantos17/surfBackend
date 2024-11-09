@@ -67,15 +67,15 @@ def update_graph_data():
         # Commit the transaction
         conn.commit()
 
-        # Print the updated data for verification
-        print("Updated Combined Tide Data in graph_data:")
-        for row in combined_data:
-            formatted_row = [
-                value.strftime('%H:%M') if isinstance(value, datetime.time) else
-                value.strftime('%Y-%m-%d') if isinstance(value, datetime.date) else value
-                for value in row
-            ]
-            print(tuple(formatted_row))
+        # # Print the updated data for verification
+        # print("Updated Combined Tide Data in graph_data:")
+        # for row in combined_data:
+        #     formatted_row = [
+        #         value.strftime('%H:%M') if isinstance(value, datetime.time) else
+        #         value.strftime('%Y-%m-%d') if isinstance(value, datetime.date) else value
+        #         for value in row
+        #     ]
+        #     print(tuple(formatted_row))
 
     except Exception as e:
         print(f"Error updating graph_data: {e}")

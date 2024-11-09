@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv('config.env')
 
+
 def get_db_connection():
     """Establish and return a connection to the PostgreSQL database."""
     return psycopg2.connect(
@@ -45,6 +46,17 @@ def fetch_historical_tide_data(lat: float, lng: float) -> dict:
     else:
         print(f"Error fetching historical tide data: {response.status_code}")
         return None
+    
+def convert_to_24hr_format(time_str: str) -> str:
+    """Convert time from 12-hour format to 24-hour format."""
+    try:
+        # Parse the time string to a datetime object
+        time_obj = datetime.strptime(time_str, '%I:%M %p')  # 12-hour format (e.g., 2:30 PM)
+        # Convert to 24-hour format
+        return time_obj.strftime('%H:%M')  # 24-hour format (e.g., 14:30)
+    except ValueError:
+        # If the time format is incorrect, return the original string
+        return time_str
 
 def move_last_tide_to_boundary(location_id: int, lat: float, lng: float) -> None:
     """Fetch the last tide entry for the previous day and insert it into boundary_tide_data."""
@@ -60,6 +72,7 @@ def move_last_tide_to_boundary(location_id: int, lat: float, lng: float) -> None
                     
                     # Prepare data for insertion
                     tide_time = last_tide_entry['tideTime']
+                    tide_time_24hr = convert_to_24hr_format(tide_time)  # Convert to 24-hour format
                     tide_height_mt = last_tide_entry['tideHeight_mt']
                     tide_type = last_tide_entry['tide_type']
                     tide_date = datetime.strptime(weather_data['date'], '%Y-%m-%d').date()
@@ -78,7 +91,7 @@ def move_last_tide_to_boundary(location_id: int, lat: float, lng: float) -> None
                         INSERT INTO boundary_tide_data (
                             location_id, tide_time, tide_height_mt, tide_type, tide_date
                         ) VALUES (%s, %s, %s, %s, %s)
-                    ''', (location_id, tide_time, tide_height_mt, tide_type, tide_date))
+                    ''', (location_id, tide_time_24hr, tide_height_mt, tide_type, tide_date))
                     
                     conn.commit()
                     print(f"Tide data for location ID {location_id} replaced successfully.")

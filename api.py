@@ -159,6 +159,7 @@ def get_combined_tide_data(location_id):
         ''', (location_id, three_days_ago.date(), two_days_after.date()))
         
         tide_data = cursor.fetchall()
+        print(f"Tide Data: {tide_data}")  # Add this debug statement
 
         # Fetch tide data from boundary_tide_data table for the same date range
         cursor.execute('''
@@ -168,6 +169,7 @@ def get_combined_tide_data(location_id):
         ''', (location_id, three_days_ago.date(), two_days_after.date()))
         
         boundary_tide_data = cursor.fetchall()
+        print(f"Boundary Tide Data: {boundary_tide_data}")  # Add this debug statement
 
         # Format and combine tide data for JSON serialization
         combined_data = [
@@ -182,6 +184,44 @@ def get_combined_tide_data(location_id):
         ]
 
         return jsonify(combined_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+        
+@app.route('/graph-data/<int:location_id>', methods=['GET'])
+def get_graph_data(location_id):
+    """Fetches graph data for a specific location."""
+    conn, cursor = None, None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Fetch graph data based on location_id
+        cursor.execute('''
+            SELECT id, location_id, tide_time, tide_height_mt, tide_type, tide_date
+            FROM graph_data WHERE location_id = %s
+        ''', (location_id,))
+        graph_data = cursor.fetchall()
+
+        if not graph_data:
+            return jsonify({'error': 'No graph data found for this location'}), 404
+
+        # Format and serialize graph data for JSON response
+        graph_data_response = [
+            {
+                'Time': serialize_time(row[2]),  # Formatting tide time (e.g., '22:01')
+                'Tide Height': row[3],  # Tide height in meters
+                'Tide Type': row[4],  # Tide type (e.g., 'LOW' or 'HIGH')
+                'Date': row[5].strftime('%Y-%m-%d') if isinstance(row[5], datetime) else row[5].strftime('%Y-%m-%d')
+            }
+            for row in graph_data
+        ]
+
+        return jsonify(graph_data_response)
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500

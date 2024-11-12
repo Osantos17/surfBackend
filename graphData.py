@@ -10,6 +10,21 @@ def get_db_connection():
         port="5432"
     )
 
+def time_to_numeric(tide_time):
+    """Convert time to numeric value representing minutes since midnight."""
+    if isinstance(tide_time, str):
+        # Parse the time string (assumed format is '%H:%M')
+        try:
+            time_obj = datetime.datetime.strptime(tide_time, '%H:%M').time()
+            return time_obj.hour * 60 + time_obj.minute
+        except ValueError:
+            print(f"Invalid time format: {tide_time}")
+            return 0  # Return 0 if the time string format is incorrect
+    elif isinstance(tide_time, datetime.time):
+        return tide_time.hour * 60 + tide_time.minute
+    return 0  # In case tide_time is None or invalid
+
+
 def update_graph_data():
     """Fetch combined data from tide_data and boundary_tide_data tables, 
        then replace current data in graph_data with the updated data."""
@@ -46,18 +61,24 @@ def update_graph_data():
 
         # Insert the combined data into graph_data table and get the generated id
         insert_query = """
-            INSERT INTO graph_data (location_id, tide_time, tide_height_mt, tide_type, tide_date)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO graph_data (location_id, tide_time, tide_time_numeric, tide_height_mt, tide_type, tide_date)
+            VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING id
         """
         for row in combined_data:
+            # Calculate tide_time_numeric
+            tide_time_numeric = time_to_numeric(row[1])
+
+            # Ensure the tide_time is formatted as 'HH:MM' and tide_date as 'YYYY-MM-DD'
             formatted_row = (
-                row[0],
-                row[1].strftime('%H:%M') if isinstance(row[1], datetime.time) else row[1],
-                row[2],
-                row[3],
-                row[4].strftime('%Y-%m-%d') if isinstance(row[4], datetime.date) else row[4]
+                row[0],  # location_id
+                row[1].strftime('%H:%M') if isinstance(row[1], datetime.time) else row[1],  # tide_time
+                tide_time_numeric,  # tide_time_numeric
+                row[2],  # tide_height_mt
+                row[3],  # tide_type
+                row[4].strftime('%Y-%m-%d') if isinstance(row[4], datetime.date) else row[4]  # tide_date
             )
+
             cursor.execute(insert_query, formatted_row)
 
             # Fetch the id of the inserted row
@@ -66,16 +87,6 @@ def update_graph_data():
 
         # Commit the transaction
         conn.commit()
-
-        # # Print the updated data for verification
-        # print("Updated Combined Tide Data in graph_data:")
-        # for row in combined_data:
-        #     formatted_row = [
-        #         value.strftime('%H:%M') if isinstance(value, datetime.time) else
-        #         value.strftime('%Y-%m-%d') if isinstance(value, datetime.date) else value
-        #         for value in row
-        #     ]
-        #     print(tuple(formatted_row))
 
     except Exception as e:
         print(f"Error updating graph_data: {e}")

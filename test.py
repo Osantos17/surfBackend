@@ -1,5 +1,5 @@
 import psycopg2
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 def get_db_connection():
     """Establish a connection to the database."""
@@ -22,6 +22,17 @@ def fetch_tide_data():
     tide_data = cursor.fetchall()
     conn.close()
     return tide_data
+
+def fetch_latest_tide_date():
+    """Fetch the most recent tide date from the database."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT MAX(tide_date) FROM graph_data
+    """)
+    latest_tide_date = cursor.fetchone()[0]
+    conn.close()
+    return latest_tide_date
 
 def get_next_multiple_of_60(num):
     """Calculate the next multiple of 60 greater than or equal to num."""
@@ -68,10 +79,26 @@ def adjust_numeric_values(interpolated_values):
     
     return adjusted_values
 
+def insert_into_graph_points(location_id, graph_time, tide_height, graph_date, tide_type=None):
+    """Insert data into the graph_points table."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO graph_points (location_id, graph_time, tide_height, graph_date, tide_type)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (location_id, graph_time, tide_height, graph_date, tide_type))
+    conn.commit()
+    conn.close()
+
 def process_tide_entries(tide_data, start_date):
-    """Process and print entries for each location group with calculated and adjusted tide info."""
-    # Convert start_date to datetime for consistent handling
-    current_date = datetime.strptime(start_date, "%Y-%m-%d")
+    """Process and insert entries into the graph_points table."""
+    # Ensure start_date is a datetime object
+    if isinstance(start_date, datetime):  # if it's a datetime object
+        current_date = start_date
+    elif isinstance(start_date, date):  # if it's a date object
+        current_date = datetime.combine(start_date, datetime.min.time())
+    else:  # assume it's a string and convert to datetime
+        current_date = datetime.strptime(start_date, "%Y-%m-%d")
     
     # Group data by location_id
     data_by_location = {}
@@ -88,6 +115,14 @@ def process_tide_entries(tide_data, start_date):
     # Process entries for each location group
     for location_id, entries in data_by_location.items():
         print(f"Location ID: {location_id}")
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            DELETE FROM graph_points WHERE location_id = %s
+        """, (location_id,))
+        conn.commit()
+        conn.close()
         
         for i in range(len(entries) - 1):
             # Current entry
@@ -107,26 +142,29 @@ def process_tide_entries(tide_data, start_date):
             # Adjust numeric values according to 1440 rule
             adjusted_values = adjust_numeric_values(interpolated_values)
 
-            # Print the current entry in array format
-            print(f" Tide Source:  [{tide_time_str1}, {tide_height_mt1}, {tide_date_str1}, {tide_type1}]")
+            # Insert data into graph_points table for the current entry
+            insert_into_graph_points(location_id, tide_time_str1, tide_height_mt1, tide_date_str1, tide_type1)
             
-            # Print each tide info as a separate line with "Tide Source:" in front
+            # Insert each tide info as a separate entry into graph_points
             for idx, value in enumerate(adjusted_values, start=1):
                 time_str, height = value
                 if time_str == '00:00':
                     # Increment the date if time is '00:00'
                     current_date += timedelta(days=1)
                     
-                print(f"  Tide Info {idx}: ['{time_str}', {height}, {current_date.strftime('%Y-%m-%d')}]")
+                insert_into_graph_points(location_id, time_str, height, current_date.strftime('%Y-%m-%d'))
         
-        # Print the last entry in array format without generating z sequence as there's no subsequent entry
+        # Insert the last entry in array format without generating z sequence as there's no subsequent entry
         id_last, tide_time_str_last, x_last, tide_height_mt_last, tide_type_last, tide_date_str_last = entries[-1]
-        print(f" Tide Source: [{tide_time_str_last}, {tide_height_mt_last}, {tide_date_str_last}, {tide_type_last}]")
+        insert_into_graph_points(location_id, tide_time_str_last, tide_height_mt_last, tide_date_str_last, tide_type_last)
 
 def main():
     """Main function to fetch data and process entries."""
     tide_data = fetch_tide_data()
-    start_date = "2024-11-08"  # Update as needed
+    start_date = fetch_latest_tide_date()  # Get the latest date from the database
+    if start_date is None:
+        # If no tides are found, default to today
+        start_date = datetime.now().strftime('%Y-%m-%d')
     process_tide_entries(tide_data, start_date)
 
 # Run the main function

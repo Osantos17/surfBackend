@@ -2,7 +2,6 @@ import psycopg2
 from datetime import datetime, timedelta
 from test import fetch_tide_data
 
-
 def get_db_connection():
     """Establish a connection to the database."""
     return psycopg2.connect(
@@ -36,6 +35,7 @@ def process_tide_entries(tide_data, start_date):
     current_date = datetime.strptime(start_date, "%Y-%m-%d")
     data_by_location = {}
 
+    # Group data by location_id
     for row in tide_data:
         id, location_id, tide_time, tide_time_numeric, tide_height_mt, tide_type, tide_date = row
         tide_time_str = tide_time.strftime('%H:%M:%S') if isinstance(tide_time, datetime) else tide_time
@@ -46,25 +46,30 @@ def process_tide_entries(tide_data, start_date):
             data_by_location[location_id] = []
         data_by_location[location_id].append(entry)
 
+    # Iterate over locations and insert data into the graph_points table
     for location_id, entries in data_by_location.items():
         for i in range(len(entries) - 1):
-            id1, tide_time_str1, x, tide_height_mt1, tide_type1, tide_date_str1 = entries[i]
-            _, _, y, tide_height_mt2, _, _ = entries[i + 1]
-            f = y + 1440 if x > y else y
-
-            z_sequence = generate_z_sequence(x, f)
-            interpolated_values = interpolate_heights(x, f, tide_height_mt1, tide_height_mt2, z_sequence)
-            adjusted_values = adjust_numeric_values(interpolated_values)
-
+            # Tide Source entry (first entry)
+            id1, tide_time_str1, _, tide_height_mt1, tide_type1, tide_date_str1 = entries[i]
+            # Insert the Tide Source data
             insert_into_graph_points(location_id, tide_time_str1, tide_height_mt1, tide_date_str1, tide_type1)
 
+            # Process the remaining Tide Info entries
+            _, _, y, tide_height_mt2, _, _ = entries[i + 1]
+            f = y + 1440 if _ > y else y
+
+            z_sequence = generate_z_sequence(_, f)
+            interpolated_values = interpolate_heights(_, f, tide_height_mt1, tide_height_mt2, z_sequence)
+            adjusted_values = adjust_numeric_values(interpolated_values)
+
+            # Insert adjusted tide information (Tide Info entries)
             for value in adjusted_values:
                 time_str, height = value
                 if time_str == '00:00':
                     current_date += timedelta(days=1)
                 insert_into_graph_points(location_id, time_str, height, current_date.strftime('%Y-%m-%d'))
 
-        # Insert the last entry in the series
+        # Insert the last entry in the series (Tide Source)
         id_last, tide_time_str_last, _, tide_height_mt_last, tide_type_last, tide_date_str_last = entries[-1]
         insert_into_graph_points(location_id, tide_time_str_last, tide_height_mt_last, tide_date_str_last, tide_type_last)
 

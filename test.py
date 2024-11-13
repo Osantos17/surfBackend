@@ -1,101 +1,134 @@
 import psycopg2
-import datetime
+from datetime import datetime, timedelta
 
 def get_db_connection():
     """Establish a connection to the database."""
     return psycopg2.connect(
-        dbname="surf_forecast",  
-        user="orlandosantos",    
-        host="localhost",        
+        dbname="surf_forecast",
+        user="orlandosantos",
+        host="localhost",
         port="5432"
     )
 
-def time_to_numeric(tide_time):
-    """Convert time to numeric value representing minutes since midnight."""
-    # If tide_time is a string, convert it to a time object
-    if isinstance(tide_time, str):
-        # Try to convert string time (e.g. "22:01") to a datetime.time object
-        try:
-            tide_time = datetime.datetime.strptime(tide_time, "%H:%M").time()
-        except ValueError:
-            return 0  # Return 0 if format is not as expected
+def fetch_tide_data():
+    """Fetch tide data from the database."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, location_id, tide_time, tide_time_numeric, tide_height_mt, tide_type, tide_date
+        FROM graph_data
+        ORDER BY location_id, id
+    """)
+    tide_data = cursor.fetchall()
+    conn.close()
+    return tide_data
 
-    # Ensure the time is a valid datetime.time object
-    if isinstance(tide_time, datetime.time):
-        return tide_time.hour * 60 + tide_time.minute
-    return 0  # In case tide_time is None or invalid
+def get_next_multiple_of_60(num):
+    """Calculate the next multiple of 60 greater than or equal to num."""
+    return ((num // 60) + 1) * 60
 
-def update_graph_data():
-    """Fetch combined data from tide_data and boundary_tide_data tables, 
-       then replace current data in graph_data with the updated data."""
-    try:
-        # Establish database connection
-        conn = get_db_connection()
-        cursor = conn.cursor()
+def generate_z_sequence(x, f):
+    """Generate the z sequence based on the numeric value of x and f."""
+    z = []
+    current_value = get_next_multiple_of_60(x)
+    
+    # Generate values until we exceed f
+    while current_value <= f:
+        z.append(current_value)
+        current_value += 60
+    
+    return z
 
-        # Fetch data from tide_data table
-        cursor.execute("""
-            SELECT location_id, tide_time, tide_height_mt, tide_type, tide_date
-            FROM tide_data
-            ORDER BY location_id, tide_date, tide_time
-        """)
-        tide_data_rows = cursor.fetchall()
+def interpolate_heights(x, y, tide_height_x, tide_height_y, z_sequence):
+    """Interpolate heights for each value in z_sequence."""
+    interpolated_values = []
+    for z in z_sequence:
+        interpolated_height = tide_height_x + ((z - x) / (y - x)) * (tide_height_y - tide_height_x)
+        interpolated_values.append([z, round(interpolated_height, 2)])  # Rounding for clarity
+    return interpolated_values
 
-        # Fetch data from boundary_tide_data table
-        cursor.execute("""
-            SELECT location_id, tide_time, tide_height_mt, tide_type, tide_date
-            FROM boundary_tide_data
-            ORDER BY location_id, tide_date, tide_time
-        """)
-        boundary_data_rows = cursor.fetchall()
+def adjust_numeric_values(interpolated_values):
+    """Adjust numeric values based on the presence of 1440 and convert to HH:MM format."""
+    adjusted_values = []
+    subtract_1440 = False  # Flag to start subtracting 1440
+    
+    for numeric, height in interpolated_values:
+        if numeric == 1440:
+            # Change 1440 to 0 and set flag for future values
+            adjusted_values.append(["00:00", height])
+            subtract_1440 = True
+        else:
+            if subtract_1440:
+                # Subtract 1440 from all subsequent numeric values
+                numeric -= 1440
+            
+            # Convert minutes to HH:MM format
+            time_str = str(timedelta(minutes=numeric))[:-3]  # Removing seconds for HH:MM format
+            adjusted_values.append([time_str, height])
+    
+    return adjusted_values
 
-        # Combine and sort the data
-        combined_data = tide_data_rows + boundary_data_rows
-        combined_data.sort(key=lambda x: (x[0], x[4], x[1]))  # Sort by location_id, date, time
+def process_tide_entries(tide_data, start_date):
+    """Process and print entries for each location group with calculated and adjusted tide info."""
+    # Convert start_date to datetime for consistent handling
+    current_date = datetime.strptime(start_date, "%Y-%m-%d")
+    
+    # Group data by location_id
+    data_by_location = {}
+    for row in tide_data:
+        id, location_id, tide_time, tide_time_numeric, tide_height_mt, tide_type, tide_date = row
+        tide_time_str = tide_time.strftime('%H:%M:%S') if isinstance(tide_time, datetime) else tide_time
+        tide_date_str = tide_date.strftime('%Y-%m-%d') if isinstance(tide_date, datetime) else tide_date
+        entry = (id, tide_time_str, tide_time_numeric, tide_height_mt, tide_type, tide_date_str)
 
-        # Clear current data in graph_data table
-        cursor.execute("DELETE FROM graph_data")
+        if location_id not in data_by_location:
+            data_by_location[location_id] = []
+        data_by_location[location_id].append(entry)
+    
+    # Process entries for each location group
+    for location_id, entries in data_by_location.items():
+        print(f"Location ID: {location_id}")
+        
+        for i in range(len(entries) - 1):
+            # Current entry
+            id1, tide_time_str1, x, tide_height_mt1, tide_type1, tide_date_str1 = entries[i]
+            # Next entry for calculating f
+            _, _, y, tide_height_mt2, _, _ = entries[i + 1]
 
-        # Reset the sequence to start from 1
-        cursor.execute("SELECT setval(pg_get_serial_sequence('graph_data', 'id'), 1, false)")
+            # Calculate f
+            f = y + 1440 if x > y else y
 
-        # Insert the combined data into graph_data table and get the generated id
-        insert_query = """
-            INSERT INTO graph_data (location_id, tide_time, tide_time_numeric, tide_height_mt, tide_type, tide_date)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING id
-        """
-        for row in combined_data:
-            # Calculate tide_time_numeric
-            tide_time_numeric = time_to_numeric(row[1])
+            # Generate the z sequence
+            z_sequence = generate_z_sequence(x, f)
+            
+            # Interpolate heights for the z sequence
+            interpolated_values = interpolate_heights(x, f, tide_height_mt1, tide_height_mt2, z_sequence)
+            
+            # Adjust numeric values according to 1440 rule
+            adjusted_values = adjust_numeric_values(interpolated_values)
 
-            # Convert tide_time to string for display
-            tide_time_str = str(row[1]) if isinstance(row[1], datetime.time) else row[1]
+            # Print the current entry in array format
+            print(f" Tide Source:  [{tide_time_str1}, {tide_height_mt1}, {tide_date_str1}, {tide_type1}]")
+            
+            # Print each tide info as a separate line with "Tide Source:" in front
+            for idx, value in enumerate(adjusted_values, start=1):
+                time_str, height = value
+                if time_str == '00:00':
+                    # Increment the date if time is '00:00'
+                    current_date += timedelta(days=1)
+                    
+                print(f"  Tide Info {idx}: ['{time_str}', {height}, {current_date.strftime('%Y-%m-%d')}]")
+        
+        # Print the last entry in array format without generating z sequence as there's no subsequent entry
+        id_last, tide_time_str_last, x_last, tide_height_mt_last, tide_type_last, tide_date_str_last = entries[-1]
+        print(f" Tide Source: [{tide_time_str_last}, {tide_height_mt_last}, {tide_date_str_last}, {tide_type_last}]")
 
-            formatted_row = (
-                row[0],  # location_id
-                tide_time_str,  # tide_time (as string)
-                tide_time_numeric,  # tide_time_numeric
-                row[2],  # tide_height_mt
-                row[3],  # tide_type
-                row[4].strftime('%Y-%m-%d') if isinstance(row[4], datetime.date) else row[4]  # tide_date
-            )
-            cursor.execute(insert_query, formatted_row)
+def main():
+    """Main function to fetch data and process entries."""
+    tide_data = fetch_tide_data()
+    start_date = "2024-11-08"  # Update as needed
+    process_tide_entries(tide_data, start_date)
 
-            # Fetch the id of the inserted row
-            inserted_id = cursor.fetchone()[0]
-            print(f"{inserted_id}, {tuple(formatted_row)}")
-
-        # Commit the transaction
-        conn.commit()
-
-    except Exception as e:
-        print(f"Error updating graph_data: {e}")
-    finally:
-        # Close the connection
-        cursor.close()
-        conn.close()
-
-# Run the function to update graph_data
-update_graph_data()
-
+# Run the main function
+if __name__ == "__main__":
+    main()

@@ -59,7 +59,6 @@ def get_surf(location_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # Fetch surf data for the given location_id
         cursor.execute('''
             SELECT id, location_id, date, sunrise, sunset, time, tempF, windspeedMiles, winddirDegree, 
                    winddir16point, weatherDesc, swellHeight_ft, swelldir, swelldir16point, swellperiod_secs
@@ -71,15 +70,14 @@ def get_surf(location_id):
         if not surf_data:
             return jsonify({'error': 'No surf data found for this location'}), 404
 
-        # Serialize the response
         response = [
             {
                 'id': row[0],
                 'location_id': row[1],
-                'date': serialize_date(row[2]),
-                'sunrise': serialize_time(row[3]),
-                'sunset': serialize_time(row[4]),
-                'time': serialize_time(row[5]),
+                'date': row[2],
+                'sunrise': row[3],
+                'sunset': row[4],
+                'time': row[5],
                 'tempF': row[6],
                 'windspeedMiles': row[7],
                 'winddirDegree': row[8],
@@ -89,16 +87,14 @@ def get_surf(location_id):
                 'swelldir': row[12],
                 'swelldir16point': row[13],
                 'swellperiod_secs': row[14],
-            } for row in surf_data
+            }
+            for row in surf_data
         ]
 
         return jsonify(response)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        cursor.close()
-        conn.close()
-
+        print(f"Error fetching surf data: {e}")
+        return jsonify({'error': 'Error fetching surf data'}), 500
 
 
 
@@ -113,11 +109,12 @@ def get_combined_data_by_id(location_id):
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Fetch location data
+        # Fetch location data including min/max wind and swell directions
         cursor.execute('''
-            location_id, date, sunrise, sunset, time, tempF, windspeedMiles, winddirDegree, 
-                       winddir16point, weatherDesc, swellHeight_ft, swelldir, swelldir16point, swellperiod_secs
-                FROM surf_data WHERE location_id = %s
+            SELECT id, location_name, latitude, longitude, 
+                   preferred_wind_dir_min, preferred_wind_dir_max, 
+                   preferred_swell_dir_min, preferred_swell_dir_max
+            FROM locations WHERE id = %s
         ''', (location_id,))
         location = cursor.fetchone()
 
@@ -129,6 +126,10 @@ def get_combined_data_by_id(location_id):
             'location_name': location[1],
             'latitude': location[2],
             'longitude': location[3],
+            'preferred_wind_dir_min': location[4],
+            'preferred_wind_dir_max': location[5],
+            'preferred_swell_dir_min': location[6],
+            'preferred_swell_dir_max': location[7],
         }
 
         # Fetch and attach surf data
@@ -187,6 +188,7 @@ def get_combined_data_by_id(location_id):
     finally:
         if cursor: cursor.close()
         if conn: conn.close()
+
 
 @app.route('/api/combined-tide-data/<int:location_id>', methods=['GET'])
 def get_combined_tide_data(location_id):

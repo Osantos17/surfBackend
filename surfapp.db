@@ -1,0 +1,40 @@
+def process_tide_entries(tide_data, start_date):
+    """Process and insert entries into the graph_points table."""
+    if isinstance(start_date, date):
+        start_date = datetime.combine(start_date, datetime.min.time())
+    else:
+        start_date = datetime.strptime(start_date, "%Y-%m-%d")
+
+    data_by_location = {}
+    for row in tide_data:
+        id, location_id, tide_time, tide_time_numeric, tide_height_mt, tide_type, tide_date = row
+        tide_time_str = tide_time.strftime('%H:%M:%S') if isinstance(tide_time, datetime) else tide_time
+        tide_date_str = tide_date.strftime('%Y-%m-%d') if isinstance(tide_date, datetime) else tide_date
+        entry = (id, tide_time_str, tide_time_numeric, tide_height_mt, tide_type, tide_date_str)
+
+        if location_id not in data_by_location:
+            data_by_location[location_id] = []
+        data_by_location[location_id].append(entry)
+
+    # Process each location's tide data
+    for location_id, entries in data_by_location.items():
+        print(f"Processing Location ID: {location_id}")
+        current_date = start_date  # Start from the provided start date for each location_id
+
+        # Process tide data entries for each location
+        for i in range(len(entries) - 1):
+            id1, tide_time_str1, x, tide_height_mt1, tide_type1, tide_date_str1 = entries[i]
+            _, _, y, tide_height_mt2, _, _ = entries[i + 1]
+
+            f = y + 1440 if x > y else y
+            z_sequence = generate_z_sequence(x, f)
+            interpolated_values = interpolate_heights(x, f, tide_height_mt1, tide_height_mt2, z_sequence)
+            adjusted_values = adjust_numeric_values(interpolated_values, current_date)
+
+            insert_into_graph_points(location_id, tide_time_str1, tide_height_mt1, tide_date_str1, tide_type1)
+
+            for time_str, height, date_str in adjusted_values:
+                if time_str == '00:00':
+                    # Date only changes when the tide time is '00:00', but only for a new day
+                    current_date += timedelta(days=1)  # Increment the date
+                insert_into_graph_points(location_id, time_str, height, date_str)

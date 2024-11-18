@@ -3,6 +3,7 @@ import os
 from datetime import datetime, timedelta
 import requests
 from dotenv import load_dotenv
+import logging
 
 load_dotenv('config.env')
 
@@ -76,17 +77,20 @@ def move_last_tide_to_boundary(location_id: int, lat: float, lng: float) -> None
                     tide_height_mt = last_tide_entry['tideHeight_mt']
                     tide_type = last_tide_entry['tide_type']
                     tide_date = datetime.strptime(weather_data['date'], '%Y-%m-%d').date()
-                    
+
+                    # Print the fetched date for debugging
+                    print(f"Fetched tide data for {tide_date}, time: {tide_time_24hr}, height: {tide_height_mt}")
+
                     conn = get_db_connection()
                     cursor = conn.cursor()
 
-                    # Delete all existing tide entries for the location and tide_date
+                    # Delete all entries for this location to ensure only latest data remains
                     cursor.execute('''
                         DELETE FROM boundary_tide_data
-                        WHERE location_id = %s AND tide_date = %s
-                    ''', (location_id, tide_date))
+                        WHERE location_id = %s
+                    ''', (location_id,))
                     
-                    # Insert the new tide data into boundary_tide_data
+                    # Insert new tide data
                     cursor.execute('''
                         INSERT INTO boundary_tide_data (
                             location_id, tide_time, tide_height_mt, tide_type, tide_date
@@ -109,31 +113,27 @@ def move_last_tide_to_boundary(location_id: int, lat: float, lng: float) -> None
         if 'conn' in locals() and conn:
             conn.close()
 
+
 def update_tide_data_for_all_locations():
     """Fetch and update tide data for all locations in the locations table."""
     try:
-        # Connect to the database
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                # Fetch all locations
+                cursor.execute('SELECT id, latitude, longitude FROM locations')
+                locations = cursor.fetchall()
 
-        # Fetch all locations (id, lat, lng) - update column name if necessary
-        cursor.execute('SELECT id, latitude, longitude FROM locations')
-        locations = cursor.fetchall()
+                # Iterate through all locations and update tide data
+                for location in locations:
+                    location_id, lat, lng = location
+                    move_last_tide_to_boundary(location_id, lat, lng)
+                    logging.info(f"Tide data updated for location ID {location_id}")
 
-        # Iterate through all locations and update tide data
-        for location in locations:
-            location_id, lat, lng = location
-            move_last_tide_to_boundary(location_id, lat, lng)
-
-        print("Tide data update complete for all locations.")
-        
+                conn.commit()
+                logging.info("Tide data update complete for all locations.")
+                
     except Exception as e:
-        print(f"Error updating tide data for all locations: {e}")
-    finally:
-        if 'cursor' in locals() and cursor:
-            cursor.close()
-        if 'conn' in locals() and conn:
-            conn.close()
+        logging.error(f"Error updating tide data for all locations: {e}")
 
 # Run the update for all locations
 update_tide_data_for_all_locations()

@@ -53,6 +53,54 @@ def get_locations():
             'longitude': row[3]
         } for row in locations
     ])
+    
+@app.route('/surf/<int:location_id>', methods=['GET'])
+def get_surf(location_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Fetch surf data for the given location_id
+        cursor.execute('''
+            SELECT id, location_id, date, sunrise, sunset, time, tempF, windspeedMiles, winddirDegree, 
+                   winddir16point, weatherDesc, swellHeight_ft, swelldir, swelldir16point, swellperiod_secs
+            FROM surf_data
+            WHERE location_id = %s
+        ''', (location_id,))
+        surf_data = cursor.fetchall()
+
+        if not surf_data:
+            return jsonify({'error': 'No surf data found for this location'}), 404
+
+        # Serialize the response
+        response = [
+            {
+                'id': row[0],
+                'location_id': row[1],
+                'date': serialize_date(row[2]),
+                'sunrise': serialize_time(row[3]),
+                'sunset': serialize_time(row[4]),
+                'time': serialize_time(row[5]),
+                'tempF': row[6],
+                'windspeedMiles': row[7],
+                'winddirDegree': row[8],
+                'winddir16point': row[9],
+                'weatherDesc': row[10],
+                'swellHeight_ft': row[11],
+                'swelldir': row[12],
+                'swelldir16point': row[13],
+                'swellperiod_secs': row[14],
+            } for row in surf_data
+        ]
+
+        return jsonify(response)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
 
 @app.route('/locations/combined-data/<int:location_id>', methods=['GET'])
 def get_combined_data_by_id(location_id):
@@ -67,8 +115,9 @@ def get_combined_data_by_id(location_id):
 
         # Fetch location data
         cursor.execute('''
-            SELECT id, location_name, latitude, longitude
-            FROM locations WHERE id = %s
+            location_id, date, sunrise, sunset, time, tempF, windspeedMiles, winddirDegree, 
+                       winddir16point, weatherDesc, swellHeight_ft, swelldir, swelldir16point, swellperiod_secs
+                FROM surf_data WHERE location_id = %s
         ''', (location_id,))
         location = cursor.fetchone()
 
@@ -191,6 +240,46 @@ def get_combined_tide_data(location_id):
     finally:
         if cursor: cursor.close()
         if conn: conn.close()
+        
+@app.route('/graph-points/<int:location_id>', methods=['GET'])
+def get_graph_points(location_id):
+    """Fetches graph points data for a specific location."""
+    conn, cursor = None, None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Fetch data from graph_points table based on location_id, ordered by id
+        cursor.execute('''
+            SELECT id, location_id, graph_time, tide_height, tide_type
+            FROM graph_points WHERE location_id = %s ORDER BY id
+        ''', (location_id,))
+        graph_points_data = cursor.fetchall()
+
+        if not graph_points_data:
+            return jsonify({'error': 'No graph points data found for this location'}), 404
+
+        # Format and serialize data for JSON response
+        graph_points_response = [
+            {
+                'id': row[0],
+                'location_id': row[1],
+                'graph_time': serialize_time(row[2]),
+                'tide_height': round(float(row[3]) * 3.28084, 2),  # Convert to float, then to feet and round
+                'tide_type': row[4]
+            }
+            for row in graph_points_data
+        ]
+
+        return jsonify(graph_points_response)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
         
 @app.route('/graph-data/<int:location_id>', methods=['GET'])
 def get_graph_data(location_id):

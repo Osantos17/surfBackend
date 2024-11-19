@@ -59,6 +59,7 @@ def get_surf(location_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
+        # Fetch surf data for the given location_id
         cursor.execute('''
             SELECT id, location_id, date, sunrise, sunset, time, tempF, windspeedMiles, winddirDegree, 
                    winddir16point, weatherDesc, swellHeight_ft, swelldir, swelldir16point, swellperiod_secs
@@ -70,14 +71,15 @@ def get_surf(location_id):
         if not surf_data:
             return jsonify({'error': 'No surf data found for this location'}), 404
 
+        # Serialize the response
         response = [
             {
                 'id': row[0],
                 'location_id': row[1],
-                'date': row[2],
-                'sunrise': row[3],
-                'sunset': row[4],
-                'time': row[5],
+                'date': serialize_date(row[2]),
+                'sunrise': serialize_time(row[3]),
+                'sunset': serialize_time(row[4]),
+                'time': serialize_time(row[5]),
                 'tempF': row[6],
                 'windspeedMiles': row[7],
                 'winddirDegree': row[8],
@@ -87,14 +89,16 @@ def get_surf(location_id):
                 'swelldir': row[12],
                 'swelldir16point': row[13],
                 'swellperiod_secs': row[14],
-            }
-            for row in surf_data
+            } for row in surf_data
         ]
 
         return jsonify(response)
     except Exception as e:
-        print(f"Error fetching surf data: {e}")
-        return jsonify({'error': 'Error fetching surf data'}), 500
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 
 
 

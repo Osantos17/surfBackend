@@ -40,7 +40,7 @@ def serialize_date(value):
 def get_locations():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT id, location_name, latitude, longitude FROM locations')
+    cursor.execute('SELECT id, location_name, latitude, longitude FROM locations ORDER BY latitude DESC')
     locations = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -53,6 +53,44 @@ def get_locations():
             'longitude': row[3]
         } for row in locations
     ])
+
+@app.route('/locations/<int:location_id>', methods=['GET'])
+def get_location_by_id(location_id):
+    """Fetches a single location by its ID."""
+    conn, cursor = None, None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Query for the specific location
+        cursor.execute('''
+            SELECT id, location_name, latitude, longitude 
+            FROM locations 
+            WHERE id = %s
+        ''', (location_id,))
+        location = cursor.fetchone()
+
+        if not location:
+            return jsonify({'error': 'Location not found'}), 404
+
+        # Format the response
+        location_data = {
+            'id': location[0],
+            'location_name': location[1],
+            'latitude': location[2],
+            'longitude': location[3]
+        }
+
+        return jsonify(location_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
     
 @app.route('/surf/<int:location_id>', methods=['GET'])
 def get_surf(location_id):

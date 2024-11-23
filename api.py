@@ -56,15 +56,19 @@ def get_locations():
 
 @app.route('/locations/<int:location_id>', methods=['GET'])
 def get_location_by_id(location_id):
-    """Fetches a single location by its ID."""
+    """Fetches a single location by its ID and includes max/min swell and wind directions."""
     conn, cursor = None, None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Query for the specific location
+        # Correct SQL query with no trailing comma and added 'wavecalc' column
         cursor.execute('''
-            SELECT id, location_name, latitude, longitude 
+            SELECT id, location_name, latitude, longitude, 
+                   preferred_wind_dir_min, preferred_wind_dir_max, 
+                   preferred_swell_dir_min, preferred_swell_dir_max,
+                   bad_swell_dir_min, bad_swell_dir_max, 
+                   wavecalc  -- Added wavecalc column
             FROM locations 
             WHERE id = %s
         ''', (location_id,))
@@ -73,12 +77,19 @@ def get_location_by_id(location_id):
         if not location:
             return jsonify({'error': 'Location not found'}), 404
 
-        # Format the response
+        # Format the response and include wavecalc
         location_data = {
             'id': location[0],
             'location_name': location[1],
             'latitude': location[2],
-            'longitude': location[3]
+            'longitude': location[3],
+            'preferred_wind_dir_min': location[4],
+            'preferred_wind_dir_max': location[5],
+            'preferred_swell_dir_min': location[6],
+            'preferred_swell_dir_max': location[7],
+            'bad_swell_dir_min': location[8],
+            'bad_swell_dir_max': location[9],
+            'wavecalc': location[10]  # Added wavecalc to response
         }
 
         return jsonify(location_data)
@@ -362,6 +373,47 @@ def get_graph_data(location_id):
     finally:
         if cursor: cursor.close()
         if conn: conn.close()
+        
+@app.route('/tide-data/<int:location_id>', methods=['GET'])
+def get_tide_data(location_id):
+    """Fetches tide data for a specific location."""
+    conn, cursor = None, None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Fetch tide data for the given location_id
+        cursor.execute('''
+            SELECT id, location_id, tide_time, tide_height_mt, tide_type, tide_date
+            FROM tide_data
+            WHERE location_id = %s
+        ''', (location_id,))
+        tide_data = cursor.fetchall()
+
+        if not tide_data:
+            return jsonify({'error': 'No tide data found for this location'}), 404
+
+        # Serialize the tide data for JSON response
+        response = [
+            {
+                'id': row[0],
+                'location_id': row[1],
+                'tide_time': serialize_time(row[2]),
+                'tide_height_mt': row[3],
+                'tide_type': row[4],
+                'tide_date': serialize_date(row[5])
+            } for row in tide_data
+        ]
+
+        return jsonify(response)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
 
 
 if __name__ == "__main__":

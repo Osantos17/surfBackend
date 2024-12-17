@@ -1,17 +1,31 @@
+import os
+from dotenv import load_dotenv
 import psycopg2
 from datetime import datetime, timedelta, date
+import mysql.connector # type: ignore
 
+
+load_dotenv('config.env')
+
+DB_HOST = os.getenv('DB_HOST')
+DB_USER = os.getenv('DB_USER')
+DB_PASSWORD = os.getenv('DB_PASSWORD')
+DB_NAME = os.getenv('DB_NAME')
+DB_PORT = os.getenv('DB_PORT')
+
+# Use them in your database connection code
 def get_db_connection():
-    """Establish a connection to the database."""
     try:
-        return psycopg2.connect(
-            dbname="surf_forecast",
-            user="orlandosantos",
-            host="localhost",
-            port="5432"
+        connection = mysql.connector.connect(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_NAME,
+            port=int(DB_PORT)
         )
-    except psycopg2.Error as e:
-        print(f"Error connecting to database: {e}")
+        return connection
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
         return None
 
 def fetch_tide_data():

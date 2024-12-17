@@ -1,14 +1,33 @@
 import psycopg2
 import datetime
+import mysql.connector # type: ignore
+from urllib.parse import urlparse
+from dotenv import load_dotenv
+import os
 
+
+load_dotenv('config.env')
+
+DB_HOST = os.getenv('DB_HOST')
+DB_USER = os.getenv('DB_USER')
+DB_PASSWORD = os.getenv('DB_PASSWORD')
+DB_NAME = os.getenv('DB_NAME')
+DB_PORT = os.getenv('DB_PORT')
+
+# Use them in your database connection code
 def get_db_connection():
-    """Establish a connection to the database."""
-    return psycopg2.connect(
-        dbname="surf_forecast",  
-        user="orlandosantos",    
-        host="localhost",        
-        port="5432"
-    )
+    try:
+        connection = mysql.connector.connect(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_NAME,
+            port=int(DB_PORT)
+        )
+        return connection
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return None
 
 def time_to_numeric(tide_time):
     """Convert time to numeric value representing minutes since midnight."""

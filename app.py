@@ -1,19 +1,37 @@
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import psycopg2
-from datetime import datetime,timedelta, time as time_type
+import mysql.connector # type: ignore
+import os
+from urllib.parse import urlparse
+from datetime import datetime, timedelta, time as time_type
 import time 
+
+load_dotenv('config.env')
 
 app = Flask(__name__)
 CORS(app)
 
+DB_HOST = os.getenv('DB_HOST')
+DB_USER = os.getenv('DB_USER')
+DB_PASSWORD = os.getenv('DB_PASSWORD')
+DB_NAME = os.getenv('DB_NAME')
+DB_PORT = os.getenv('DB_PORT')
+
+# Use them in your database connection code
 def get_db_connection():
-    return psycopg2.connect(
-        dbname="surf_forecast",
-        user="orlandosantos",
-        host='localhost',
-        port='5432'
-    )
+    try:
+        connection = mysql.connector.connect(
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_NAME,
+            port=int(DB_PORT)
+        )
+        return connection
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return None
 
 # Utility functions to serialize date and time
 def serialize_time(value):
@@ -35,6 +53,10 @@ def serialize_time(value):
 
 def serialize_date(value):
     return value.strftime('%a %b %d') if isinstance(value, datetime) else value
+
+@app.route("/")
+def home():
+    return "Hello, World!"
 
 @app.route('/locations', methods=['GET'])
 def get_locations():

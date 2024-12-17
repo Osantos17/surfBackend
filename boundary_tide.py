@@ -1,21 +1,33 @@
+from urllib.parse import urlparse
 import psycopg2
 import os
 from datetime import datetime, timedelta
 import requests
 from dotenv import load_dotenv
 import logging
+import mysql.connector # type: ignore
+
 
 load_dotenv('config.env')
 
 
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+# Use them in your database connection code
 def get_db_connection():
-    """Establish and return a connection to the PostgreSQL database."""
-    return psycopg2.connect(
-        dbname="surf_forecast",
-        user="orlandosantos",
-        host="localhost",
-        port="5432"
-    )
+    try:
+        url = urlparse(os.getenv('DATABASE_URL'))
+        connection = mysql.connector.connect(
+            host=url.hostname,
+            user=url.username,
+            password=url.password,
+            database=url.path[1:],  # Remove the leading '/' from the path
+            port=url.port
+        )
+        return connection
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return None
 
 def fetch_historical_tide_data(lat: float, lng: float) -> dict:
     """Fetch historical tide data from the API for the previous day."""

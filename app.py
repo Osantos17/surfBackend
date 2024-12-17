@@ -12,26 +12,24 @@ load_dotenv('config.env')
 app = Flask(__name__)
 CORS(app)
 
-DB_HOST = os.getenv('DB_HOST')
-DB_USER = os.getenv('DB_USER')
-DB_PASSWORD = os.getenv('DB_PASSWORD')
-DB_NAME = os.getenv('DB_NAME')
-DB_PORT = os.getenv('DB_PORT')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 # Use them in your database connection code
 def get_db_connection():
     try:
+        url = urlparse(os.getenv('DATABASE_URL'))
         connection = mysql.connector.connect(
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            database=DB_NAME,
-            port=int(DB_PORT)
+            host=url.hostname,
+            user=url.username,
+            password=url.password,
+            database=url.path[1:],  # Remove the leading '/' from the path
+            port=url.port
         )
         return connection
     except mysql.connector.Error as err:
         print(f"Error: {err}")
         return None
+
 
 # Utility functions to serialize date and time
 def serialize_time(value):
@@ -436,7 +434,6 @@ def get_tide_data(location_id):
         if cursor: cursor.close()
         if conn: conn.close()
 
-
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+

@@ -1,34 +1,32 @@
-from dotenv import load_dotenv
+import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import mysql.connector # type: ignore
-import os
-from urllib.parse import urlparse
+import psycopg2
 from datetime import datetime, timedelta, time as time_type
-import time 
+from dotenv import load_dotenv
 
-load_dotenv('config.env')
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-DATABASE_URL = os.getenv('DATABASE_URL')
-
-# Use them in your database connection code
 def get_db_connection():
-    try:
-        url = urlparse(os.getenv('DATABASE_URL'))
-        connection = mysql.connector.connect(
-            host=url.hostname,
-            user=url.username,
-            password=url.password,
-            database=url.path[1:],  # Remove the leading '/' from the path
-            port=url.port
+    # Get the DATABASE_URL environment variable
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+
+    if DATABASE_URL:
+        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+    else:
+        # For local testing or fallback, use local settings (adjust as needed)
+        conn = psycopg2.connect(
+            dbname="surf_forecast",
+            user="orlandosantos",
+            host="localhost",
+            port="5432"
         )
-        return connection
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
-        return None
+    
+    return conn
 
 
 # Utility functions to serialize date and time
@@ -51,10 +49,6 @@ def serialize_time(value):
 
 def serialize_date(value):
     return value.strftime('%a %b %d') if isinstance(value, datetime) else value
-
-@app.route("/")
-def home():
-    return "Hello, World!"
 
 @app.route('/locations', methods=['GET'])
 def get_locations():
@@ -434,6 +428,7 @@ def get_tide_data(location_id):
         if cursor: cursor.close()
         if conn: conn.close()
 
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 
+
+if __name__ == "__main__":
+    app.run(debug=True)

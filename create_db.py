@@ -1,31 +1,28 @@
 import psycopg2
 import requests
 import os
-import mysql.connector # type: ignore
-from urllib.parse import urlparse
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from db import move_last_tide_to_boundary
 
 load_dotenv('config.env')
 
-DATABASE_URL = os.getenv('DATABASE_URL')
-
-# Use them in your database connection code
 def get_db_connection():
-    try:
-        url = urlparse(os.getenv('DATABASE_URL'))
-        connection = mysql.connector.connect(
-            host=url.hostname,
-            user=url.username,
-            password=url.password,
-            database=url.path[1:],  # Remove the leading '/' from the path
-            port=url.port
+    # Get the DATABASE_URL environment variable
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+
+    if DATABASE_URL:
+        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+    else:
+        # For local testing or fallback, use local settings (adjust as needed)
+        conn = psycopg2.connect(
+            dbname="surf_forecast",
+            user="orlandosantos",
+            host="localhost",
+            port="5432"
         )
-        return connection
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
-        return None
+    
+    return conn
 
 def create_db() -> None:
     """Create the database and necessary tables."""

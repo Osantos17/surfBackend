@@ -5,28 +5,28 @@ import psycopg2
 from datetime import datetime, timedelta, time as time_type
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
 def get_db_connection():
-    # Get the DATABASE_URL environment variable
-    DATABASE_URL = os.environ.get('DATABASE_URL')
+    try:
+        DATABASE_URL = os.environ.get('DATABASE_URL')
+        if DATABASE_URL:
+            conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+        else:
+            conn = psycopg2.connect(
+                dbname="surf_forecast",
+                user="orlandosantos",
+                host="localhost",
+                port="5432"
+            )
+        return conn
+    except psycopg2.Error as e:
+        print(f"Database connection error: {e}")
+        raise
 
-    if DATABASE_URL:
-        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-    else:
-        # For local testing or fallback, use local settings (adjust as needed)
-        conn = psycopg2.connect(
-            dbname="surf_forecast",
-            user="orlandosantos",
-            host="localhost",
-            port="5432"
-        )
-    
-    return conn
 
 
 # Utility functions to serialize date and time
@@ -49,6 +49,10 @@ def serialize_time(value):
 
 def serialize_date(value):
     return value.strftime('%a %b %d') if isinstance(value, datetime) else value
+
+@app.route('/')
+def hello():
+    return "Hello, World!"
 
 @app.route('/locations', methods=['GET'])
 def get_locations():

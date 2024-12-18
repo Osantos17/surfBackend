@@ -29,8 +29,7 @@ def create_db() -> None:
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-
-        # Create locations table
+        
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS locations (
                 id SERIAL PRIMARY KEY,
@@ -40,9 +39,7 @@ def create_db() -> None:
             )
         ''')
         
-        
 
-        # Create surf_data table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS surf_data (
                 id SERIAL PRIMARY KEY,
@@ -64,7 +61,6 @@ def create_db() -> None:
             )
         ''')
 
-        # Create tide_data table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS tide_data (
                 id SERIAL PRIMARY KEY,
@@ -73,6 +69,40 @@ def create_db() -> None:
                 tide_height_mt FLOAT,
                 tide_type VARCHAR(10),
                 tide_date DATE
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS graph_data (
+                id SERIAL PRIMARY KEY,
+                location_id INT REFERENCES locations(id),
+                tide_date DATE,
+                tide_height_mt DOUBLE PRECISION,
+                tide_time TIME WITHOUT TIME ZONE,
+                tide_time_numeric INTEGER,
+                tide_type VARCHAR(50)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS graph_points (
+                id SERIAL PRIMARY KEY,
+                location_id INT REFERENCES locations(id),
+                graph_date DATE NOT NULL,
+                graph_time TIME WITHOUT TIME ZONE NOT NULL,
+                tide_height NUMERIC,
+                tide_type VARCHAR(20)
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS boundary_tide_data (
+                id SERIAL PRIMARY KEY,
+                location_id INT REFERENCES locations(id),
+                tide_height_mt DOUBLE PRECISION,
+                tide_date DATE,
+                tide_time VARCHAR(20),
+                tide_type VARCHAR(20)
             )
         ''')
 
@@ -84,6 +114,8 @@ def create_db() -> None:
     finally:
         cursor.close()
         conn.close()
+        
+    
         
         
 def add_columns_to_locations_table() -> None:

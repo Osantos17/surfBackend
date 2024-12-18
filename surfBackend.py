@@ -3,7 +3,9 @@ import os
 import psycopg2
 from dotenv import load_dotenv
 
-load_dotenv('config.env')
+if os.getenv('ENV') != 'production':  # Example to distinguish local vs Heroku
+    load_dotenv('config.env')
+
 
 def fetch_surf(lat, lng):
     api_key = os.getenv('API_KEY')

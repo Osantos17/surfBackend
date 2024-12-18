@@ -39,6 +39,8 @@ def create_db() -> None:
                 longitude FLOAT NOT NULL
             )
         ''')
+        
+        
 
         # Create surf_data table
         cursor.execute('''
@@ -82,6 +84,35 @@ def create_db() -> None:
     finally:
         cursor.close()
         conn.close()
+        
+        
+def add_columns_to_locations_table() -> None:
+    """Add missing columns to the locations table."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Add new columns to the locations table
+        cursor.execute('''
+            ALTER TABLE locations
+            ADD COLUMN IF NOT EXISTS preferred_wind_dir_min INTEGER,
+            ADD COLUMN IF NOT EXISTS preferred_wind_dir_max INTEGER,
+            ADD COLUMN IF NOT EXISTS preferred_swell_dir_min INTEGER,
+            ADD COLUMN IF NOT EXISTS preferred_swell_dir_max INTEGER,
+            ADD COLUMN IF NOT EXISTS bad_swell_dir_min INTEGER,
+            ADD COLUMN IF NOT EXISTS bad_swell_dir_max INTEGER,
+            ADD COLUMN IF NOT EXISTS wavecalc VARCHAR(100);
+        ''')
+
+        conn.commit()
+        print("Columns added successfully!")
+
+    except Exception as e:
+        print(f"Error adding columns: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
 
 def move_last_tide_to_boundary(location_id: int) -> None:
     """Move the last tide entry of the previous day from tide_data to boundary_tide_data."""
@@ -226,7 +257,8 @@ def insert_surf_data(location_id: int, data: dict) -> None:
         conn.close()
 
 if __name__ == "__main__":
-    create_db()
+    create_db()  
+    add_columns_to_locations_table() 
 
     try:
         conn = get_db_connection()

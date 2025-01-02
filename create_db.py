@@ -133,7 +133,8 @@ def add_columns_to_locations_table() -> None:
             ADD COLUMN IF NOT EXISTS preferred_swell_dir_max INTEGER,
             ADD COLUMN IF NOT EXISTS bad_swell_dir_min INTEGER,
             ADD COLUMN IF NOT EXISTS bad_swell_dir_max INTEGER,
-            ADD COLUMN IF NOT EXISTS wavecalc VARCHAR(100);
+            ADD COLUMN IF NOT EXISTS wavecalc VARCHAR(100),
+            ADD COLUMN IF NOT EXISTS Region VARCHAR(50); 
         ''')
 
         conn.commit()
@@ -144,6 +145,7 @@ def add_columns_to_locations_table() -> None:
     finally:
         cursor.close()
         conn.close()
+
 
 
 def move_last_tide_to_boundary(location_id: int) -> None:

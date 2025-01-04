@@ -9,21 +9,15 @@ load_dotenv('config.env')
 
 
 def get_db_connection():
-    # Get the DATABASE_URL environment variable
-    DATABASE_URL = os.environ.get('DATABASE_URL')
-
-    if DATABASE_URL:
-        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-    else:
-        # For local testing or fallback, use local settings (adjust as needed)
-        conn = psycopg2.connect(
-            dbname="surf_forecast",
-            user="orlandosantos",
-            host="localhost",
-            port="5432"
-        )
-    
+    # Always use local settings for the Postico database
+    conn = psycopg2.connect(
+        dbname="surf_forecast",
+        user="orlandosantos",
+        host="localhost",
+        port="5432"
+    )
     return conn
+
 
 def fetch_historical_tide_data(lat: float, lng: float) -> dict:
     """Fetch historical tide data from the API for the previous day."""
@@ -68,58 +62,55 @@ def convert_to_24hr_format(time_str: str) -> str:
         return time_str
 
 def move_last_tide_to_boundary(location_id: int, lat: float, lng: float) -> None:
-    """Fetch the last tide entry for the previous day and insert it into boundary_tide_data."""
     try:
         tide_data = fetch_historical_tide_data(lat, lng)
-        if tide_data:
-            if 'data' in tide_data and 'weather' in tide_data['data']:
-                weather_data = tide_data['data']['weather'][0]
+        
+        if tide_data and 'data' in tide_data and 'weather' in tide_data['data']:
+            weather_data = tide_data['data']['weather'][0]
+            
+            if 'tides' in weather_data and weather_data['tides']:
+                last_tide_entry = weather_data['tides'][0]['tide_data'][-1]
                 
-                # If there are tide entries, get the last one
-                if 'tides' in weather_data and weather_data['tides']:
-                    last_tide_entry = weather_data['tides'][0]['tide_data'][-1]  # Last tide event of the day
-                    
-                    # Prepare data for insertion
-                    tide_time = last_tide_entry['tideTime']
-                    tide_time_24hr = convert_to_24hr_format(tide_time)  # Convert to 24-hour format
-                    tide_height_mt = last_tide_entry['tideHeight_mt']
-                    tide_type = last_tide_entry['tide_type']
-                    tide_date = datetime.strptime(weather_data['date'], '%Y-%m-%d').date()
-
-                    # Print the fetched date for debugging
-                    print(f"Fetched tide data for {tide_date}, time: {tide_time_24hr}, height: {tide_height_mt}")
-
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-
-                    # Delete all entries for this location to ensure only latest data remains
-                    cursor.execute('''
-                        DELETE FROM boundary_tide_data
-                        WHERE location_id = %s
-                    ''', (location_id,))
-                    
-                    # Insert new tide data
-                    cursor.execute('''
-                        INSERT INTO boundary_tide_data (
-                            location_id, tide_time, tide_height_mt, tide_type, tide_date
-                        ) VALUES (%s, %s, %s, %s, %s)
-                    ''', (location_id, tide_time_24hr, tide_height_mt, tide_type, tide_date))
-                    
-                    conn.commit()
-                    print(f"Tide data for location ID {location_id} replaced successfully.")
+                tide_time = last_tide_entry['tideTime']
+                tide_time_24hr = convert_to_24hr_format(tide_time)
+                tide_height_mt = last_tide_entry['tideHeight_mt']
+                tide_type = last_tide_entry['tide_type']
+                tide_date = datetime.strptime(weather_data['date'], '%Y-%m-%d').date()
                 
+                print(f"Fetched data: {tide_time_24hr}, {tide_height_mt}, {tide_type} for {tide_date}")
+                
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                
+                cursor.execute('''
+                    DELETE FROM boundary_tide_data
+                    WHERE location_id = %s
+                ''', (location_id,))
+                
+                cursor.execute('''
+                    INSERT INTO boundary_tide_data (
+                        location_id, tide_time, tide_height_mt, tide_type, tide_date
+                    ) VALUES (%s, %s, %s, %s, %s)
+                ''', (location_id, tide_time_24hr, tide_height_mt, tide_type, tide_date))
+                
+                print(f"Inserting tide data for location {location_id} at {tide_time_24hr}")
+                
+                conn.commit()
+                print(f"Tide data updated for location {location_id}.")
             else:
-                print("No weather data or tides found in the response.")
+                print(f"No tide data found for location {location_id}.")
+                
         else:
-            print("No tide data returned from API.")
+            print(f"No valid weather data returned for location {location_id}.")
                 
     except Exception as e:
         print(f"Error moving tide entry to boundary_tide_data: {e}")
     finally:
-        if 'cursor' in locals() and cursor:
+        if 'cursor' in locals():
             cursor.close()
-        if 'conn' in locals() and conn:
+        if 'conn' in locals():
             conn.close()
+
 
 
 def update_tide_data_for_all_locations():
@@ -142,6 +133,10 @@ def update_tide_data_for_all_locations():
                 
     except Exception as e:
         logging.error(f"Error updating tide data for all locations: {e}")
+        
+        cursor.execute('SELECT COUNT(*) FROM locations')
+        print(cursor.fetchone())
+
 
 # Run the update for all locations
 update_tide_data_for_all_locations()

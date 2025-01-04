@@ -160,7 +160,7 @@ def move_last_tide_to_boundary(location_id: int) -> None:
             SELECT location_id, 
                    CASE 
                        WHEN tide_time = '12:00 AM' THEN '00:00'  -- Handle midnight as 00:00
-                       ELSE to_char(tide_time, 'HH24:MI')  -- Convert time to 24-hour format
+                       ELSE to_char(tide_time::TIME, 'HH24:MI')
                    END AS tide_time_24hr,
                    tide_height_mt, 
                    tide_type, 

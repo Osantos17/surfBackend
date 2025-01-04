@@ -2,12 +2,13 @@ import requests
 import os
 import psycopg2
 from dotenv import load_dotenv
+from datetime import datetime
 
-if os.getenv('ENV') != 'production':  # Example to distinguish local vs Heroku
+if os.getenv('ENV') != 'production':
     load_dotenv('config.env')
 
 
-def fetch_surf(lat, lng):
+def fetch_surf(lat, lng, location_id):
     api_key = os.getenv('API_KEY')
     
     if not api_key:
@@ -22,92 +23,137 @@ def fetch_surf(lat, lng):
         'tide': 'yes',
     }
 
-    # GET request
     response = requests.get(base_url, params=params)
 
     if response.status_code == 200:
         data = response.json()
         print("API Response:", data)
-        
-        # Check if the surf data exists in the response
+
         try:
-            weather_data = data['data'][0]['weather']  # Assuming there's at least one entry in the data
-            insert_surf_data(lat, lng, weather_data)
+            if 'data' in data and data['data'].get('weather'):
+                weather_data = data['data']['weather']
+                insert_surf_data(location_id, weather_data)
+            else:
+                print("Warning: 'weather' data not found in the API response.")
         except KeyError as e:
             print(f"KeyError: {str(e)} - Surf data not found in the API response.")
-    else:
-        print(f"Error fetching data: {response.status_code}")
 
-def insert_surf_data(lat, lng, weather_data):
-    # Using environment variables for the database connection (recommended for Heroku and local dev)
+
+def insert_surf_data(location_id, weather_data):
     dbname = os.getenv('DB_NAME', 'surf_forecast')
     user = os.getenv('DB_USER', 'orlandosantos')
     host = os.getenv('DB_HOST', 'localhost')
     port = os.getenv('DB_PORT', '5432')
-    
-    conn = psycopg2.connect(
-        dbname=dbname,
-        user=user,
-        host=host,
-        port=port
-    )
-    cursor = conn.cursor()
 
-    # Get the location_id based on latitude and longitude
-    cursor.execute("SELECT id FROM locations WHERE latitude = %s AND longitude = %s", (lat, lng))
-    location_id = cursor.fetchone()
+    try:
+        conn = psycopg2.connect(
+            dbname=dbname,
+            user=user,
+            host=host,
+            port=port
+        )
+        cursor = conn.cursor()
 
-    if location_id:
-        location_id = location_id[0]
-
-        # Clear existing surf data for this location (optional, if using upsert)
-        cursor.execute('DELETE FROM surf_data WHERE location_id = %s', (location_id,))
-        print(f"Deleted existing surf data for location_id: {location_id}")
+        # Delete existing data for the location
+        cursor.execute("DELETE FROM surf_data WHERE location_id = %s", (location_id,))
 
         for surf_data in weather_data:
-            try:
-                time = surf_data.get('time')
-                swellHeight_ft = surf_data.get('swellHeight_ft')
-                swellDir = surf_data.get('swellDir')
-                swellDir16Point = surf_data.get('swellDir16Point')
-                windspeedMiles = surf_data.get('windspeedMiles')
-                winddirDegree = surf_data.get('winddirDegree')
-                tempF = surf_data.get('tempF')  # If you need temperature as well
-                weatherDesc = surf_data.get('weatherDesc')[0]['value'] if 'weatherDesc' in surf_data else None
-                sunrise = surf_data.get('sunrise')  # Example if you need sunrise time
-                sunset = surf_data.get('sunset')  # Example if you need sunset time
+            date = surf_data.get('date')
+            date = datetime.strptime(date, '%Y-%m-%d').date()  # Convert to datetime.date object
+            sunrise = surf_data['astronomy'][0].get('sunrise')
+            sunset = surf_data['astronomy'][0].get('sunset')
 
-                # Use INSERT ... ON CONFLICT for upsert behavior
+            if sunrise:
+                sunrise = datetime.strptime(sunrise, '%I:%M %p').time()  # Convert to time
+            else:
+                sunrise = None  # Handle missing sunrise
+
+            if sunset:
+                sunset = datetime.strptime(sunset, '%I:%M %p').time()  # Convert to time
+            else:
+                sunset = None  # Handle missing sunset
+
+            for hourly_data in surf_data.get('hourly', []):
+                time = hourly_data.get('time')
+                temp_f = hourly_data.get('tempF')
+                wind_speed = hourly_data.get('windspeedMiles')
+                wind_dir_degree = hourly_data.get('winddirDegree')
+                wind_dir_16pt = hourly_data.get('winddir16Point')  # Correct this part
+                weather_desc = hourly_data['weatherDesc'][0].get('value')
+                swell_height_ft = hourly_data.get('swellHeight_ft')
+                swell_dir = hourly_data.get('swellDir')
+                swell_period = hourly_data.get('swellPeriod_secs')
+                water_temp_f = hourly_data.get('waterTemp_F')
+                swell_dir_16pt = hourly_data.get('swellDir16Point')  # Correct this part
+                print("swellDir16Point:", swell_dir_16pt)
+
+            
+                # Debugging output for the values
+                print("Inserting values:", (
+                    location_id, date, time, temp_f, wind_speed, wind_dir_degree,
+                    wind_dir_16pt, weather_desc, swell_height_ft, swell_dir,
+                    swell_period, water_temp_f, sunrise, sunset, swell_dir_16pt
+                ))
+
+                values = (
+                    location_id, date, time, temp_f, wind_speed, wind_dir_degree,
+                    wind_dir_16pt, weather_desc, swell_height_ft, swell_dir,
+                    swell_period, water_temp_f, sunrise, sunset, swell_dir_16pt
+                )
+            
+                # Debugging statement to check SQL query and values
+                print(f"Inserting values into the database: {values}")
+                print(f"swellDir16Point: {swell_dir_16pt}")
+
                 cursor.execute(
                     '''INSERT INTO surf_data (
-                        location_id, time, swellHeight_ft, swellDir, swellDir16Point, windspeedMiles, winddirDegree, 
-                        tempF, weatherDesc, sunrise, sunset
-                    )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (location_id, time) DO UPDATE SET
-                        swellHeight_ft = EXCLUDED.swellHeight_ft,
-                        swellDir = EXCLUDED.swellDir,
-                        swellDir16Point = EXCLUDED.swellDir16Point,
-                        windspeedMiles = EXCLUDED.windspeedMiles,
-                        winddirDegree = EXCLUDED.winddirDegree,
-                        tempF = EXCLUDED.tempF,
-                        weatherDesc = EXCLUDED.weatherDesc,
-                        sunrise = EXCLUDED.sunrise,
-                        sunset = EXCLUDED.sunset''',
-                    (location_id, time, swellHeight_ft, swellDir, swellDir16Point, windspeedMiles, winddirDegree,
-                     tempF, weatherDesc, sunrise, sunset)
+                        location_id, date, time, tempf, windspeedmiles, winddirdegree,
+                        winddir16point, weatherdesc, swellheight_ft, swelldir,
+                        swellperiod_secs, watertemp_f, sunrise, sunset, swelldir16point
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                    values
                 )
-                print(f"Inserted or updated surf data for location_id: {location_id} at time: {time}")
 
-            except KeyError as e:
-                print(f"KeyError for data entry: {e} - Missing expected field in API response")
 
-    else:
-        print(f"Location not found for latitude: {lat}, longitude: {lng}")
+        conn.commit()
 
-    conn.commit()
-    cursor.close()
-    conn.close()
+    except Exception as e:
+        print(f"Error: {str(e)}")
 
-# Example usage
-fetch_surf(37.488897, -122.466919)
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def process_all_locations():
+    dbname = os.getenv('DB_NAME', 'surf_forecast')
+    user = os.getenv('DB_USER', 'orlandosantos')
+    host = os.getenv('DB_HOST', 'localhost')
+    port = os.getenv('DB_PORT', '5432')
+
+    try:
+        conn = psycopg2.connect(
+            dbname=dbname,
+            user=user,
+            host=host,
+            port=port
+        )
+        cursor = conn.cursor()
+
+        cursor.execute('SELECT id, latitude, longitude FROM locations')
+        locations = cursor.fetchall()
+
+        for location in locations:
+            location_id, lat, lng = location
+            fetch_surf(lat, lng, location_id)
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# Run for all locations
+process_all_locations()

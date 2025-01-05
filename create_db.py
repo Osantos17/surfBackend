@@ -7,21 +7,21 @@ from datetime import datetime, timedelta
 load_dotenv('config.env')
 
 def get_db_connection():
-    # Get the DATABASE_URL environment variable
     DATABASE_URL = os.environ.get('DATABASE_URL')
 
     if DATABASE_URL:
         conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     else:
-        # For local testing or fallback, use local settings (adjust as needed)
+        # For local testing or fallback, use local settings (only for local development)
         conn = psycopg2.connect(
             dbname="surf_forecast",
-            user="orlandosantos",
+            user="your_local_user",  # Adjust accordingly for local testing
             host="localhost",
             port="5432"
         )
     
     return conn
+
 
 def create_db() -> None:
     """Create the database and necessary tables."""

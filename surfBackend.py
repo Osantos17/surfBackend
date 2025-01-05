@@ -4,8 +4,26 @@ import psycopg2
 from dotenv import load_dotenv
 from datetime import datetime
 
+# Load environment variables from config.env (only for local testing)
 if os.getenv('ENV') != 'production':
     load_dotenv('config.env')
+
+
+def get_db_connection():
+    DATABASE_URL = os.getenv('DATABASE_URL')  # Heroku sets this environment variable automatically
+
+    if DATABASE_URL:
+        conn = psycopg2.connect(DATABASE_URL, sslmode='require')  # Use the DATABASE_URL for connection
+    else:
+        # For local development, use fallback (ensure these values are correct for local testing)
+        conn = psycopg2.connect(
+            dbname="surf_forecast",
+            user="your_local_user",  # Adjust this value for local use
+            host="localhost",
+            port="5432"
+        )
+    
+    return conn
 
 
 def fetch_surf(lat, lng, location_id):
@@ -37,6 +55,7 @@ def fetch_surf(lat, lng, location_id):
                 print("Warning: 'weather' data not found in the API response.")
         except KeyError as e:
             print(f"KeyError: {str(e)} - Surf data not found in the API response.")
+
 
 
 def insert_surf_data(location_id, weather_data):

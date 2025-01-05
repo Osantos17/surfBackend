@@ -3,7 +3,6 @@ import requests
 import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
-from db import move_last_tide_to_boundary
 
 load_dotenv('config.env')
 
@@ -34,8 +33,16 @@ def create_db() -> None:
             CREATE TABLE IF NOT EXISTS locations (
                 id SERIAL PRIMARY KEY,
                 location_name VARCHAR(100) NOT NULL,
-                latitude FLOAT NOT NULL,
-                longitude FLOAT NOT NULL
+                latitude DOUBLE PRECISION NOT NULL,
+                longitude DOUBLE PRECISION NOT NULL,
+                preferred_wind_dir_min INTEGER,
+                preferred_wind_dir_max INTEGER,
+                preferred_swell_dir_min INTEGER,
+                preferred_swell_dir_max INTEGER,
+                bad_swell_dir_min INTEGER,
+                bad_swell_dir_max INTEGER,
+                wavecalc NUMERIC,
+                region VARCHAR(50)
             )
         ''')
         

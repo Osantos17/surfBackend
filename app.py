@@ -28,7 +28,6 @@ def get_db_connection():
         raise
 
 
-
 # Utility functions to serialize date and time
 def serialize_time(value):
     if isinstance(value, datetime):

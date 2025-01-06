@@ -10,20 +10,16 @@ if os.getenv('ENV') != 'production':
 
 
 def get_db_connection():
-    DATABASE_URL = os.getenv('DATABASE_URL')  # Heroku sets this environment variable automatically
-
+    DATABASE_URL = os.getenv('DATABASE_URL')  # For Heroku
     if DATABASE_URL:
-        conn = psycopg2.connect(DATABASE_URL, sslmode='require')  # Use the DATABASE_URL for connection
+        return psycopg2.connect(DATABASE_URL, sslmode='require')
     else:
-        # For local development, use fallback (ensure these values are correct for local testing)
-        conn = psycopg2.connect(
-            dbname="surf_forecast",
-            user="your_local_user",  # Adjust this value for local use
-            host="localhost",
-            port="5432"
+        return psycopg2.connect(
+            dbname=os.getenv('DB_NAME', 'surf_forecast'),
+            user=os.getenv('DB_USER', 'your_local_user'),
+            host=os.getenv('DB_HOST', 'localhost'),
+            port=os.getenv('DB_PORT', '5432')
         )
-    
-    return conn
 
 
 def fetch_surf(lat, lng, location_id):
@@ -64,6 +60,8 @@ def insert_surf_data(location_id, weather_data):
     host = os.getenv('DB_HOST', 'localhost')
     port = os.getenv('DB_PORT', '5432')
 
+    conn = None
+    cursor = None
     try:
         conn = psycopg2.connect(
             dbname=dbname,
@@ -73,8 +71,8 @@ def insert_surf_data(location_id, weather_data):
         )
         cursor = conn.cursor()
 
-        # Delete existing data for the location
         cursor.execute("DELETE FROM surf_data WHERE location_id = %s", (location_id,))
+
 
         for surf_data in weather_data:
             date = surf_data.get('date')
@@ -137,28 +135,32 @@ def insert_surf_data(location_id, weather_data):
         conn.commit()
 
     except Exception as e:
-        print(f"Error: {str(e)}")
-
+        print(f"Error inserting surf data: {str(e)}")
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 def process_all_locations():
-    dbname = os.getenv('DB_NAME', 'surf_forecast')
-    user = os.getenv('DB_USER', 'orlandosantos')
-    host = os.getenv('DB_HOST', 'localhost')
-    port = os.getenv('DB_PORT', '5432')
+    DATABASE_URL = os.getenv('DATABASE_URL')  # Use Heroku's DATABASE_URL
 
+    conn = None
+    cursor = None  # Initialize cursor to avoid UnboundLocalError
+    
     try:
-        conn = psycopg2.connect(
-            dbname=dbname,
-            user=user,
-            host=host,
-            port=port
-        )
+        if DATABASE_URL:
+            conn = psycopg2.connect(DATABASE_URL, sslmode='require')  # Heroku connection
+        else:
+            conn = psycopg2.connect(
+                dbname=os.getenv('DB_NAME', 'surf_forecast'),
+                user=os.getenv('DB_USER', 'orlandosantos'),
+                host=os.getenv('DB_HOST', 'localhost'),
+                port=os.getenv('DB_PORT', '5432')
+            )
+        
         cursor = conn.cursor()
-
         cursor.execute('SELECT id, latitude, longitude FROM locations')
         locations = cursor.fetchall()
 
@@ -170,8 +172,10 @@ def process_all_locations():
         print(f"Error: {str(e)}")
 
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 # Run for all locations

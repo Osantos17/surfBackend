@@ -3,6 +3,9 @@ import os
 import psycopg2
 from dotenv import load_dotenv
 from datetime import datetime
+from urllib.parse import urlparse
+
+
 
 if os.getenv('ENV') != 'production':
     load_dotenv('config.env')
@@ -83,20 +86,36 @@ def insert_tide_data(location_id, weather_data):
     finally:
         cursor.close()
         conn.close()
-
-def process_all_locations():
-    dbname = os.getenv('DB_NAME', 'surf_forecast')
-    user = os.getenv('DB_USER', 'orlandosantos')
-    host = os.getenv('DB_HOST', 'localhost')
-    port = os.getenv('DB_PORT', '5432')
-
-    try:
-        conn = psycopg2.connect(
+        
+def get_db_connection():
+    # Check if the app is running on Heroku or locally
+    if os.getenv('ENV') == 'production':
+        # Use Heroku's DATABASE_URL for production
+        db_url = os.getenv('DATABASE_URL')
+        url_parts = urlparse(db_url)
+        return psycopg2.connect(
+            database=url_parts.path[1:],
+            user=url_parts.username,
+            password=url_parts.password,
+            host=url_parts.hostname,
+            port=url_parts.port
+        )
+    else:
+        # Use local environment settings for local development
+        dbname = os.getenv('DB_NAME', 'surf_forecast')
+        user = os.getenv('DB_USER', 'orlandosantos')
+        host = os.getenv('DB_HOST', 'localhost')
+        port = os.getenv('DB_PORT', '5432')
+        return psycopg2.connect(
             dbname=dbname,
             user=user,
             host=host,
             port=port
         )
+
+def process_all_locations():
+    try:
+        conn = get_db_connection()
         cursor = conn.cursor()
 
         cursor.execute('SELECT id, latitude, longitude FROM locations')
@@ -110,8 +129,10 @@ def process_all_locations():
         print(f"Error: {str(e)}")
 
     finally:
-        cursor.close()
-        conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 # Run for all locations
 process_all_locations()

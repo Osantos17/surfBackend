@@ -5,8 +5,6 @@ from dotenv import load_dotenv
 from datetime import datetime
 from urllib.parse import urlparse
 
-
-
 if os.getenv('ENV') != 'production':
     load_dotenv('config.env')
 
@@ -84,8 +82,18 @@ def insert_tide_data(location_id, weather_data):
         print(f"Error: {str(e)}")
 
     finally:
-        cursor.close()
-        conn.close()
+        # Ensure cursor and conn exist before attempting to close them
+        try:
+            if cursor:
+                cursor.close()
+        except UnboundLocalError:
+            pass
+        
+        try:
+            if conn:
+                conn.close()
+        except UnboundLocalError:
+            pass
         
 def get_db_connection():
     # Check if the app is running on Heroku or locally
@@ -114,6 +122,8 @@ def get_db_connection():
         )
 
 def process_all_locations():
+    conn = None
+    cursor = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -129,6 +139,7 @@ def process_all_locations():
         print(f"Error: {str(e)}")
 
     finally:
+        # Ensure cursor and conn exist before attempting to close them
         if cursor:
             cursor.close()
         if conn:

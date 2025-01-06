@@ -45,8 +45,8 @@ def load_locations():
                     row['location_name'],
                     row['latitude'],
                     row['longitude'],
-                    row['preferred_wind_dir_min'],
-                    row['preferred_wind_dir_max'],
+                    safe_int(row['preferred_wind_dir_min']),  # Use safe_int to handle empty or invalid values
+                    safe_int(row['preferred_wind_dir_max']),  # Use safe_int to handle empty or invalid values
                     row['preferred_swell_dir_min'],
                     row['preferred_swell_dir_max'],
                     safe_int(row['bad_swell_dir_min']),  # Convert empty string to None (NULL)

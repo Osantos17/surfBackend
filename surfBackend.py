@@ -64,20 +64,22 @@ def insert_surf_data(location_id, weather_data):
             conn = psycopg2.connect(DATABASE_URL, sslmode='require')  # Use Heroku DB
         else:
             conn = psycopg2.connect(
-            dbname=os.getenv('DB_NAME', 'surf_forecast'),
-            user=os.getenv('DB_USER', 'your_local_user'),
-            host=os.getenv('DB_HOST', 'localhost'),
-            port=os.getenv('DB_PORT', '5432')
-        )
+                dbname=os.getenv('DB_NAME', 'surf_forecast'),
+                user=os.getenv('DB_USER', 'your_local_user'),
+                host=os.getenv('DB_HOST', 'localhost'),
+                port=os.getenv('DB_PORT', '5432')
+            )
 
-            
         cursor = conn.cursor()
 
         cursor.execute("DELETE FROM surf_data WHERE location_id = %s", (location_id,))
 
-
-
-        for surf_data in weather_data:
+        # Only keep data starting from the third hourly entry
+        for i, surf_data in enumerate(weather_data):
+            # Skip the first two entries (i.e., i = 0 and i = 1)
+            if i < 2:
+                continue
+            
             date = surf_data.get('date')
             date = datetime.strptime(date, '%Y-%m-%d').date()  # Convert to datetime.date object
             sunrise = surf_data['astronomy'][0].get('sunrise')

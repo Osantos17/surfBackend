@@ -40,7 +40,7 @@ def load_locations():
                     row['bad_swell_dir_min'],
                     row['bad_swell_dir_max'],
                     row['wavecalc'],
-                    row['region'],  # Corrected to insert 'region' instead of 'wavecalc'
+                    row['region'], 
                 ))
         
         # Commit changes and close the connection

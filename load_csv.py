@@ -19,10 +19,9 @@ def load_locations():
 
         with open('csv/locations.csv', mode='r') as file:
             reader = csv.DictReader(file)
-        
+
             for row in reader:
-                region = row['region'].strip() if row['region'].strip() != '' else None  # Ensure blank is treated as NULL
-                
+                print(row)  # Print the entire row
                 cur.execute("""
                     INSERT INTO locations (id, location_name, latitude, longitude, 
                                            preferred_wind_dir_min, preferred_wind_dir_max, 
@@ -41,7 +40,7 @@ def load_locations():
                     row['bad_swell_dir_min'],
                     row['bad_swell_dir_max'],
                     row['wavecalc'],
-                    region,  # Now using `None` for empty region values
+                    row['region'],
                 ))
 
         

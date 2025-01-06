@@ -97,6 +97,11 @@ def insert_surf_data(location_id, weather_data):
 
             for hourly_data in surf_data.get('hourly', []):
                 time = hourly_data.get('time')
+                
+                # Skip if the time is '00:00' (or any other invalid time format)
+                if time == '00:00':
+                    continue
+                
                 temp_f = hourly_data.get('tempF')
                 wind_speed = hourly_data.get('windspeedMiles')
                 wind_dir_degree = hourly_data.get('winddirDegree')
@@ -146,6 +151,7 @@ def insert_surf_data(location_id, weather_data):
             cursor.close()
         if conn:
             conn.close()
+
 
 
 def process_all_locations():

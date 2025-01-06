@@ -98,8 +98,9 @@ def insert_surf_data(location_id, weather_data):
                 time = hourly_data.get('time')
 
                 # Skip invalid time format
-                if time == '00:00':
+                if time == '00:00'  or time == '0':
                     continue
+                
 
                 temp_f = hourly_data.get('tempF')
                 wind_speed = hourly_data.get('windspeedMiles')

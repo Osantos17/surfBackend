@@ -76,7 +76,7 @@ def insert_tide_data(location_id, weather_data):
                         (location_id, tide_time, tide_height, tide_type, tide_date)
                     )
 
-        conn.commit()
+        conn.commit() 
 
     except Exception as e:
         print(f"Error: {str(e)}")
@@ -96,7 +96,6 @@ def insert_tide_data(location_id, weather_data):
             pass
         
 def get_db_connection():
-    # Check if the app is running on Heroku or locally
     if os.getenv('ENV') == 'production':
         # Use Heroku's DATABASE_URL for production
         db_url = os.getenv('DATABASE_URL')

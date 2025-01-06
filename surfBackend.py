@@ -76,7 +76,6 @@ def insert_surf_data(location_id, weather_data):
 
         # Only keep data starting from the third hourly entry
         for i, surf_data in enumerate(weather_data):
-            # Skip the first two entries (i.e., i = 0 and i = 1)
             if i < 2:
                 continue
             
@@ -97,24 +96,34 @@ def insert_surf_data(location_id, weather_data):
 
             for hourly_data in surf_data.get('hourly', []):
                 time = hourly_data.get('time')
-                
-                # Skip if the time is '00:00' (or any other invalid time format)
+
+                # Skip invalid time format
                 if time == '00:00':
                     continue
-                
+
                 temp_f = hourly_data.get('tempF')
                 wind_speed = hourly_data.get('windspeedMiles')
                 wind_dir_degree = hourly_data.get('winddirDegree')
-                wind_dir_16pt = hourly_data.get('winddir16Point')  # Correct this part
+                wind_dir_16pt = hourly_data.get('winddir16Point')
                 weather_desc = hourly_data['weatherDesc'][0].get('value')
                 swell_height_ft = hourly_data.get('swellHeight_ft')
                 swell_dir = hourly_data.get('swellDir')
                 swell_period = hourly_data.get('swellPeriod_secs')
                 water_temp_f = hourly_data.get('waterTemp_F')
-                swell_dir_16pt = hourly_data.get('swellDir16Point')  # Correct this part
-                print("swellDir16Point:", swell_dir_16pt)
+                swell_dir_16pt = hourly_data.get('swellDir16Point')
 
-            
+                # Filter out invalid values
+                if not temp_f or temp_f == '0':
+                    continue
+                if not wind_speed or wind_speed == '0':
+                    continue
+                if not swell_height_ft or swell_height_ft == '0':
+                    continue
+                if not wind_dir_degree:
+                    continue
+                if not swell_dir:
+                    continue
+
                 # Debugging output for the values
                 print("Inserting values:", (
                     location_id, date, time, temp_f, wind_speed, wind_dir_degree,
@@ -127,10 +136,6 @@ def insert_surf_data(location_id, weather_data):
                     wind_dir_16pt, weather_desc, swell_height_ft, swell_dir,
                     swell_period, water_temp_f, sunrise, sunset, swell_dir_16pt
                 )
-            
-                # Debugging statement to check SQL query and values
-                print(f"Inserting values into the database: {values}")
-                print(f"swellDir16Point: {swell_dir_16pt}")
 
                 cursor.execute(
                     '''INSERT INTO surf_data (
@@ -141,7 +146,6 @@ def insert_surf_data(location_id, weather_data):
                     values
                 )
 
-
         conn.commit()
 
     except Exception as e:
@@ -151,6 +155,7 @@ def insert_surf_data(location_id, weather_data):
             cursor.close()
         if conn:
             conn.close()
+
 
 
 

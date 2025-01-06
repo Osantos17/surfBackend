@@ -55,23 +55,26 @@ def fetch_surf(lat, lng, location_id):
 
 
 def insert_surf_data(location_id, weather_data):
-    dbname = os.getenv('DB_NAME', 'surf_forecast')
-    user = os.getenv('DB_USER', 'orlandosantos')
-    host = os.getenv('DB_HOST', 'localhost')
-    port = os.getenv('DB_PORT', '5432')
-
+    DATABASE_URL = os.getenv('DATABASE_URL')
+    
     conn = None
     cursor = None
     try:
-        conn = psycopg2.connect(
-            dbname=dbname,
-            user=user,
-            host=host,
-            port=port
+        if DATABASE_URL:
+            conn = psycopg2.connect(DATABASE_URL, sslmode='require')  # Use Heroku DB
+        else:
+            conn = psycopg2.connect(
+            dbname=os.getenv('DB_NAME', 'surf_forecast'),
+            user=os.getenv('DB_USER', 'your_local_user'),
+            host=os.getenv('DB_HOST', 'localhost'),
+            port=os.getenv('DB_PORT', '5432')
         )
+
+            
         cursor = conn.cursor()
 
         cursor.execute("DELETE FROM surf_data WHERE location_id = %s", (location_id,))
+
 
 
         for surf_data in weather_data:

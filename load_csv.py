@@ -2,6 +2,9 @@ import csv
 import psycopg2
 import os
 
+def safe_int(value):
+    return int(value) if value != '' else None 
+
 def load_locations():
     DATABASE_URL = os.getenv('DATABASE_URL')
 
@@ -20,8 +23,8 @@ def load_locations():
         with open('csv/locations.csv', mode='r') as file:
             reader = csv.DictReader(file)
 
+            # Iterate over each row in the CSV and insert into the database
             for row in reader:
-                print(row)  # Print the entire row
                 cur.execute("""
                     INSERT INTO locations (id, location_name, latitude, longitude, 
                                            preferred_wind_dir_min, preferred_wind_dir_max, 
@@ -37,12 +40,11 @@ def load_locations():
                     row['preferred_wind_dir_max'],
                     row['preferred_swell_dir_min'],
                     row['preferred_swell_dir_max'],
-                    row['bad_swell_dir_min'],
-                    row['bad_swell_dir_max'],
+                    safe_int(row['bad_swell_dir_min']),  # Use safe_int for handling empty strings
+                    safe_int(row['bad_swell_dir_max']),  # Use safe_int for handling empty strings
                     row['wavecalc'],
-                    row['region'],
+                    row['region'], 
                 ))
-
         
         # Commit changes and close the connection
         conn.commit()

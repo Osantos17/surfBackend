@@ -5,6 +5,8 @@ import requests
 from dotenv import load_dotenv
 import logging
 from urllib.parse import urlparse
+import pytz
+
 
 # Load environment variables
 if os.getenv('ENV') != 'production':
@@ -35,7 +37,11 @@ def fetch_historical_tide_data(lat: float, lng: float) -> dict:
         return None
     
     base_url = "http://api.worldweatheronline.com/premium/v1/marine.ashx"
-    previous_day = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+    
+    # Set to local timezone
+    local_timezone = pytz.timezone('America/Los_Angeles')  # Adjust to your local timezone
+    now_local = datetime.now(local_timezone)
+    previous_day = (now_local - timedelta(days=1)).strftime('%Y-%m-%d')
     
     params = {
         'key': api_key,

@@ -1,23 +1,26 @@
 import os
 import psycopg2
 from datetime import datetime, timedelta, date
+from urllib.parse import urlparse
+from dotenv import load_dotenv
+
+if os.getenv('ENV') != 'production':
+    load_dotenv('config.env')
 
 def get_db_connection():
-    # Get the DATABASE_URL environment variable
-    DATABASE_URL = os.environ.get('DATABASE_URL')
-
-    if DATABASE_URL:
-        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-    else:
-        # For local testing or fallback, use local settings (adjust as needed)
-        conn = psycopg2.connect(
-            dbname="surf_forecast",
-            user="orlandosantos",
-            host="localhost",
-            port="5432"
+    db_url = os.getenv('DATABASE_URL')
+    if db_url:
+        url_parts = urlparse(db_url)
+        return psycopg2.connect(
+            database=url_parts.path[1:],
+            user=url_parts.username,
+            password=url_parts.password,
+            host=url_parts.hostname,
+            port=url_parts.port
         )
-    
-    return conn
+    else:
+        raise Exception("DATABASE_URL not set in production")
+
 
 def fetch_tide_data():
     """Fetch tide data from the database."""

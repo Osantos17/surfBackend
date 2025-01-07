@@ -8,10 +8,8 @@ from urllib.parse import urlparse
 import pytz
 
 
-# Load environment variables
 if os.getenv('ENV') != 'production':
     load_dotenv('config.env')
-
 
 def get_db_connection():
     db_url = os.getenv('DATABASE_URL')

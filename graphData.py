@@ -1,16 +1,27 @@
 import os
 import psycopg2
 import datetime
+from urllib.parse import urlparse
+from dotenv import load_dotenv
+
+
+if os.getenv('ENV') != 'production':
+    load_dotenv('config.env')
 
 def get_db_connection():
-    # Always use local settings for the Postico database
-    conn = psycopg2.connect(
-        dbname="surf_forecast",
-        user="orlandosantos",
-        host="localhost",
-        port="5432"
-    )
-    return conn
+    db_url = os.getenv('DATABASE_URL')
+    if db_url:
+        url_parts = urlparse(db_url)
+        return psycopg2.connect(
+            database=url_parts.path[1:],
+            user=url_parts.username,
+            password=url_parts.password,
+            host=url_parts.hostname,
+            port=url_parts.port
+        )
+    else:
+        raise Exception("DATABASE_URL not set in production")
+
 
 def time_to_numeric(tide_time):
     """Convert time to numeric value representing minutes since midnight."""

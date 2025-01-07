@@ -39,18 +39,26 @@ def fetch_tide(lat, lng, location_id):
             print(f"KeyError: {str(e)} - Tide data not found in the API response.")
 
 def insert_tide_data(location_id, weather_data):
-    dbname = os.getenv('DB_NAME', 'surf_forecast')
-    user = os.getenv('DB_USER', 'orlandosantos')
-    host = os.getenv('DB_HOST', 'localhost')
-    port = os.getenv('DB_PORT', '5432')
+    DATABASE_URL = os.getenv('DATABASE_URL')
 
     try:
-        conn = psycopg2.connect(
-            dbname=dbname,
-            user=user,
-            host=host,
-            port=port
-        )
+        if DATABASE_URL:
+            result = urlparse(DATABASE_URL)
+            conn = psycopg2.connect(
+                dbname=result.path[1:],  # Remove the leading '/' from the path
+                user=result.username,
+                password=result.password,
+                host=result.hostname,
+                port=result.port
+            )
+        else:
+            conn = psycopg2.connect(
+                dbname=os.getenv('DB_NAME', 'surf_forecast'),
+                user=os.getenv('DB_USER', 'orlandosantos'),
+                host=os.getenv('DB_HOST', 'localhost'),
+                port=os.getenv('DB_PORT', '5432')
+            )
+
         cursor = conn.cursor()
 
         # Delete existing tide data for the location
@@ -82,18 +90,11 @@ def insert_tide_data(location_id, weather_data):
         print(f"Error: {str(e)}")
 
     finally:
-        # Ensure cursor and conn exist before attempting to close them
-        try:
-            if cursor:
-                cursor.close()
-        except UnboundLocalError:
-            pass
-        
-        try:
-            if conn:
-                conn.close()
-        except UnboundLocalError:
-            pass
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
         
 def get_db_connection():
     if os.getenv('ENV') == 'production':

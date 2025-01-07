@@ -2,7 +2,9 @@ import requests
 import os
 import psycopg2
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+
 
 # Load environment variables from config.env (only for local testing)
 if os.getenv('ENV') != 'production':
@@ -74,34 +76,38 @@ def insert_surf_data(location_id, weather_data):
 
         cursor.execute("DELETE FROM surf_data WHERE location_id = %s", (location_id,))
 
-        # Only keep data starting from the third hourly entry
+        current_time = datetime.now()  # Local current time
+        current_date = current_time.date()
+
         for i, surf_data in enumerate(weather_data):
             if i < 2:
                 continue
             
             date = surf_data.get('date')
             date = datetime.strptime(date, '%Y-%m-%d').date()  # Convert to datetime.date object
-            sunrise = surf_data['astronomy'][0].get('sunrise')
-            sunset = surf_data['astronomy'][0].get('sunset')
+            
+            # Check if the date is greater than or equal to the current date
+            if date >= current_date:
+                sunrise = surf_data['astronomy'][0].get('sunrise')
+                sunset = surf_data['astronomy'][0].get('sunset')
 
-            if sunrise:
-                sunrise = datetime.strptime(sunrise, '%I:%M %p').time()  # Convert to time
-            else:
-                sunrise = None  # Handle missing sunrise
+                if sunrise:
+                    sunrise = datetime.strptime(sunrise, '%I:%M %p').time()  # Convert to time
+                else:
+                    sunrise = None  # Handle missing sunrise
 
-            if sunset:
-                sunset = datetime.strptime(sunset, '%I:%M %p').time()  # Convert to time
-            else:
-                sunset = None  # Handle missing sunset
+                if sunset:
+                    sunset = datetime.strptime(sunset, '%I:%M %p').time()  # Convert to time
+                else:
+                    sunset = None  # Handle missing sunset
 
-            for hourly_data in surf_data.get('hourly', []):
-                time = hourly_data.get('time')
+                for hourly_data in surf_data.get('hourly', []):
+                    time = hourly_data.get('time')
 
-                # Skip invalid time format
-                if time == '00:00'  or time == '0':
-                    continue
+                    # Skip invalid time format
+                    if time == '00:00' or time == '0':
+                        continue
                 
-
                 temp_f = hourly_data.get('tempF')
                 wind_speed = hourly_data.get('windspeedMiles')
                 wind_dir_degree = hourly_data.get('winddirDegree')

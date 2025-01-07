@@ -76,38 +76,31 @@ def insert_surf_data(location_id, weather_data):
 
         cursor.execute("DELETE FROM surf_data WHERE location_id = %s", (location_id,))
 
-        current_time = datetime.now()  # Local current time
-        current_date = current_time.date()
-
-        for i, surf_data in enumerate(weather_data):
-            if i < 2:
-                continue
-            
+        for surf_data in weather_data:
+            # Iterate over all weather data for each date
             date = surf_data.get('date')
             date = datetime.strptime(date, '%Y-%m-%d').date()  # Convert to datetime.date object
-            
-            # Check if the date is greater than or equal to the current date
-            if date >= current_date:
-                sunrise = surf_data['astronomy'][0].get('sunrise')
-                sunset = surf_data['astronomy'][0].get('sunset')
 
-                if sunrise:
-                    sunrise = datetime.strptime(sunrise, '%I:%M %p').time()  # Convert to time
-                else:
-                    sunrise = None  # Handle missing sunrise
+            sunrise = surf_data['astronomy'][0].get('sunrise')
+            sunset = surf_data['astronomy'][0].get('sunset')
 
-                if sunset:
-                    sunset = datetime.strptime(sunset, '%I:%M %p').time()  # Convert to time
-                else:
-                    sunset = None  # Handle missing sunset
+            if sunrise:
+                sunrise = datetime.strptime(sunrise, '%I:%M %p').time()  # Convert to time
+            else:
+                sunrise = None
 
-                for hourly_data in surf_data.get('hourly', []):
-                    time = hourly_data.get('time')
+            if sunset:
+                sunset = datetime.strptime(sunset, '%I:%M %p').time()  # Convert to time
+            else:
+                sunset = None
 
-                    # Skip invalid time format
-                    if time == '00:00' or time == '0':
-                        continue
-                
+            for hourly_data in surf_data.get('hourly', []):
+                time = hourly_data.get('time')
+
+                # Skip invalid time format
+                if time == '00:00' or time == '0':
+                    continue
+
                 temp_f = hourly_data.get('tempF')
                 wind_speed = hourly_data.get('windspeedMiles')
                 wind_dir_degree = hourly_data.get('winddirDegree')
@@ -162,6 +155,7 @@ def insert_surf_data(location_id, weather_data):
             cursor.close()
         if conn:
             conn.close()
+
 
 
 

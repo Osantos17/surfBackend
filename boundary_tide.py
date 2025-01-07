@@ -4,34 +4,50 @@ from datetime import datetime, timedelta
 import requests
 from dotenv import load_dotenv
 import logging
+from urllib.parse import urlparse
 
-load_dotenv('config.env')
+# Load environment variables
+if os.getenv('ENV') != 'production':
+    load_dotenv('config.env')
 
 
 def get_db_connection():
-    # Always use local settings for the Postico database
-    conn = psycopg2.connect(
-        dbname="surf_forecast",
-        user="orlandosantos",
-        host="localhost",
-        port="5432"
-    )
-    return conn
+    # Check if running in production (Heroku) or development (local)
+    if os.getenv('ENV') == 'production':
+        db_url = os.getenv('DATABASE_URL')
+        if not db_url:
+            raise Exception("DATABASE_URL not found in production environment.")
+        
+        result = urlparse(db_url)
+        
+        conn = psycopg2.connect(
+            dbname=result.path[1:],  # Remove leading slash from the path
+            user=result.username,
+            password=result.password,
+            host=result.hostname,
+            port=result.port
+        )
+        return conn
+    else:
+        # Local Postico connection
+        conn = psycopg2.connect(
+            dbname="surf_forecast",
+            user="orlandosantos",
+            host="localhost",
+            port="5432"
+        )
+        return conn
 
 
 def fetch_historical_tide_data(lat: float, lng: float) -> dict:
-    """Fetch historical tide data from the API for the previous day."""
-    print(f"Fetching tide data for latitude {lat} and longitude {lng}...")  # Add this line for clarity.
-    
-    # Get the API key from the environment variable
+    print(f"Fetching tide data for latitude {lat} and longitude {lng}...")
+
     api_key = os.getenv('API_KEY')
     if not api_key:
         print("Error: API key not found in environment.")
         return None
     
     base_url = "http://api.worldweatheronline.com/premium/v1/marine.ashx"
-    
-    # Get yesterday's date in the required format
     previous_day = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
     
     params = {
@@ -49,17 +65,15 @@ def fetch_historical_tide_data(lat: float, lng: float) -> dict:
     else:
         print(f"Error fetching historical tide data: {response.status_code}")
         return None
-    
+
+
 def convert_to_24hr_format(time_str: str) -> str:
-    """Convert time from 12-hour format to 24-hour format."""
     try:
-        # Parse the time string to a datetime object
-        time_obj = datetime.strptime(time_str, '%I:%M %p')  # 12-hour format (e.g., 2:30 PM)
-        # Convert to 24-hour format
-        return time_obj.strftime('%H:%M')  # 24-hour format (e.g., 14:30)
+        time_obj = datetime.strptime(time_str, '%I:%M %p')
+        return time_obj.strftime('%H:%M')
     except ValueError:
-        # If the time format is incorrect, return the original string
         return time_str
+
 
 def move_last_tide_to_boundary(location_id: int, lat: float, lng: float) -> None:
     try:
@@ -112,17 +126,13 @@ def move_last_tide_to_boundary(location_id: int, lat: float, lng: float) -> None
             conn.close()
 
 
-
 def update_tide_data_for_all_locations():
-    """Fetch and update tide data for all locations in the locations table."""
     try:
         with get_db_connection() as conn:
             with conn.cursor() as cursor:
-                # Fetch all locations
                 cursor.execute('SELECT id, latitude, longitude FROM locations')
                 locations = cursor.fetchall()
 
-                # Iterate through all locations and update tide data
                 for location in locations:
                     location_id, lat, lng = location
                     move_last_tide_to_boundary(location_id, lat, lng)
@@ -133,11 +143,7 @@ def update_tide_data_for_all_locations():
                 
     except Exception as e:
         logging.error(f"Error updating tide data for all locations: {e}")
-        
-        cursor.execute('SELECT COUNT(*) FROM locations')
-        print(cursor.fetchone())
 
 
 # Run the update for all locations
 update_tide_data_for_all_locations()
-

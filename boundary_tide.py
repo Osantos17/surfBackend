@@ -12,31 +12,18 @@ if os.getenv('ENV') != 'production':
 
 
 def get_db_connection():
-    # Check if running in production (Heroku) or development (local)
-    if os.getenv('ENV') == 'production':
-        db_url = os.getenv('DATABASE_URL')
-        if not db_url:
-            raise Exception("DATABASE_URL not found in production environment.")
-        
-        result = urlparse(db_url)
-        
-        conn = psycopg2.connect(
-            dbname=result.path[1:],  # Remove leading slash from the path
-            user=result.username,
-            password=result.password,
-            host=result.hostname,
-            port=result.port
+    db_url = os.getenv('DATABASE_URL')
+    if db_url:
+        url_parts = urlparse(db_url)
+        return psycopg2.connect(
+            database=url_parts.path[1:],
+            user=url_parts.username,
+            password=url_parts.password,
+            host=url_parts.hostname,
+            port=url_parts.port
         )
-        return conn
     else:
-        # Local Postico connection
-        conn = psycopg2.connect(
-            dbname="surf_forecast",
-            user="orlandosantos",
-            host="localhost",
-            port="5432"
-        )
-        return conn
+        raise Exception("DATABASE_URL not set in production")
 
 
 def fetch_historical_tide_data(lat: float, lng: float) -> dict:

@@ -97,9 +97,8 @@ def insert_tide_data(location_id, weather_data):
 
         
 def get_db_connection():
-    if os.getenv('ENV') == 'production':
-        # Use Heroku's DATABASE_URL for production
-        db_url = os.getenv('DATABASE_URL')
+    db_url = os.getenv('DATABASE_URL')
+    if db_url:
         url_parts = urlparse(db_url)
         return psycopg2.connect(
             database=url_parts.path[1:],
@@ -109,17 +108,8 @@ def get_db_connection():
             port=url_parts.port
         )
     else:
-        # Use local environment settings for local development
-        dbname = os.getenv('DB_NAME', 'surf_forecast')
-        user = os.getenv('DB_USER', 'orlandosantos')
-        host = os.getenv('DB_HOST', 'localhost')
-        port = os.getenv('DB_PORT', '5432')
-        return psycopg2.connect(
-            dbname=dbname,
-            user=user,
-            host=host,
-            port=port
-        )
+        raise Exception("DATABASE_URL not set in production")
+
 
 def process_all_locations():
     conn = None

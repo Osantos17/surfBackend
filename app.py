@@ -85,7 +85,8 @@ def get_location_by_id(location_id):
                    preferred_wind_dir_min, preferred_wind_dir_max, 
                    preferred_swell_dir_min, preferred_swell_dir_max,
                    bad_swell_dir_min, bad_swell_dir_max, 
-                   wavecalc  -- Added wavecalc column
+                   wavecalc,
+                   region
             FROM locations 
             WHERE id = %s
         ''', (location_id,))
@@ -106,7 +107,8 @@ def get_location_by_id(location_id):
             'preferred_swell_dir_max': location[7],
             'bad_swell_dir_min': location[8],
             'bad_swell_dir_max': location[9],
-            'wavecalc': location[10]  # Added wavecalc to response
+            'wavecalc': location[10],
+            'region': location[11]
         }
 
         return jsonify(location_data)

@@ -57,7 +57,7 @@ def hello():
 def get_locations():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT id, location_name, latitude, longitude FROM locations ORDER BY latitude DESC')
+    cursor.execute('SELECT id, location_name, region, latitude, longitude FROM locations ORDER BY latitude DESC')
     locations = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -67,7 +67,8 @@ def get_locations():
             'id': row[0],
             'location_name': row[1],
             'latitude': row[2],
-            'longitude': row[3]
+            'longitude': row[3],
+            'region': row[4]
         } for row in locations
     ])
 

@@ -66,9 +66,9 @@ def get_locations():
         {
             'id': row[0],
             'location_name': row[1],
-            'latitude': row[2],
-            'longitude': row[3],
-            'region': row[4]
+            'region': row[2], 
+            'latitude': row[3],
+            'longitude': row[4]
         } for row in locations
     ])
 

@@ -26,19 +26,16 @@ def get_db_connection():
 def time_to_numeric(tide_time):
     """Convert time to numeric value representing minutes since midnight."""
     if isinstance(tide_time, str):
-        # Try parsing the time string in multiple formats
-        for time_format in ['%H:%M', '%H:%M:%S']:
-            try:
-                time_obj = datetime.datetime.strptime(tide_time, time_format).time()
-                return time_obj.hour * 60 + time_obj.minute
-            except ValueError:
-                continue
-        print(f"Invalid time format: {tide_time}")
-        return 0  # Default value for invalid time formats
+        # Parse the time string (now supporting '%H:%M:%S' format)
+        try:
+            time_obj = datetime.datetime.strptime(tide_time, '%H:%M:%S').time()
+            return time_obj.hour * 60 + time_obj.minute
+        except ValueError:
+            print(f"Invalid time format: {tide_time}")
+            return 0  
     elif isinstance(tide_time, datetime.time):
         return tide_time.hour * 60 + tide_time.minute
     return 0
-
 
 
 

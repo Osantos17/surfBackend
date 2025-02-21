@@ -11,6 +11,22 @@ def safe_int(value):
     except ValueError:
         return None  # Return None if the value cannot be converted to an integer
 
+def clear_tables(cur):
+    """
+    Clear data from all related tables.
+    """
+    tables = [
+        "boundary_tide_data",
+        "surf_data",
+        "tide_data",
+        "graph_data",
+        "graph_points",
+        "locations" 
+    ]
+    for table in tables:
+        cur.execute(f"DELETE FROM {table}")
+        print(f"Cleared data from '{table}' table.")
+
 def load_locations():
     DATABASE_URL = os.getenv('DATABASE_URL')
 
@@ -22,10 +38,10 @@ def load_locations():
         conn = psycopg2.connect(DATABASE_URL)
         cur = conn.cursor()
 
-        # Clear the existing table data
-        cur.execute("DELETE FROM locations")
-        print("Existing data cleared from 'locations' table.")
+        # Clear all related tables
+        clear_tables(cur)
 
+        # Load new data into the locations table
         with open('csv/locations.csv', mode='r') as file:
             reader = csv.DictReader(file)
 

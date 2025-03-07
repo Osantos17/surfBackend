@@ -42,7 +42,7 @@ def create_db() -> None:
                 bad_swell_dir_max INTEGER,
                 wavecalc NUMERIC,
                 region VARCHAR(50),
-                reef BOOLEAN  -- Add the new 'reef' column here
+                reef BOOLEAN  
             )
         ''')
         

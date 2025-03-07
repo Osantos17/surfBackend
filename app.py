@@ -80,14 +80,15 @@ def get_location_by_id(location_id):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Correct SQL query with no trailing comma and added 'wavecalc' column
+        # Updated SQL query to include the 'reef' column
         cursor.execute('''
             SELECT id, location_name, latitude, longitude, 
                    preferred_wind_dir_min, preferred_wind_dir_max, 
                    preferred_swell_dir_min, preferred_swell_dir_max,
                    bad_swell_dir_min, bad_swell_dir_max, 
                    wavecalc,
-                   region
+                   region,
+                   reef  -- <-- Add the 'reef' column here
             FROM locations 
             WHERE id = %s
         ''', (location_id,))
@@ -96,7 +97,7 @@ def get_location_by_id(location_id):
         if not location:
             return jsonify({'error': 'Location not found'}), 404
 
-        # Format the response and include wavecalc
+        # Format the response and include wavecalc and reef
         location_data = {
             'id': location[0],
             'location_name': location[1],
@@ -109,7 +110,8 @@ def get_location_by_id(location_id):
             'bad_swell_dir_min': location[8],
             'bad_swell_dir_max': location[9],
             'wavecalc': location[10],
-            'region': location[11]
+            'region': location[11],
+            'reef': location[12] 
         }
 
         return jsonify(location_data)

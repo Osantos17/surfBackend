@@ -3,13 +3,13 @@ import psycopg2
 import os
 
 def safe_int(value):
-    # Return None if the value is empty or not a valid integer
+    
     if value == '' or value is None:
         return None
     try:
         return int(value)
     except ValueError:
-        return None  # Return None if the value cannot be converted to an integer
+        return None 
 
 def update_locations():
     DATABASE_URL = os.getenv('DATABASE_URL')
@@ -22,13 +22,10 @@ def update_locations():
         conn = psycopg2.connect(DATABASE_URL)
         cur = conn.cursor()
 
-        # Load data from the CSV file
         with open('csv/locations.csv', mode='r') as file:
             reader = csv.DictReader(file)
 
-            # Iterate over each row in the CSV and update the database
             for row in reader:
-                # Debugging: Print the row before updating to check data
                 print(row)
 
                 cur.execute("""
@@ -44,24 +41,25 @@ def update_locations():
                         bad_swell_dir_min = %s,
                         bad_swell_dir_max = %s,
                         wavecalc = %s,
-                        region = %s
+                        region = %s,
+                        reef = %s  -- Add the new 'reef' column here
                     WHERE id = %s
                 """, (
                     row['location_name'],
                     row['latitude'],
                     row['longitude'],
-                    safe_int(row['preferred_wind_dir_min']),  # Use safe_int to handle empty or invalid values
-                    safe_int(row['preferred_wind_dir_max']),  # Use safe_int to handle empty or invalid values
-                    safe_int(row['preferred_swell_dir_min']),  # Use safe_int for swell direction
-                    safe_int(row['preferred_swell_dir_max']),  # Use safe_int for swell direction
-                    safe_int(row['bad_swell_dir_min']),  # Convert empty string to None (NULL)
-                    safe_int(row['bad_swell_dir_max']),  # Convert empty string to None (NULL)
+                    safe_int(row['preferred_wind_dir_min']), 
+                    safe_int(row['preferred_wind_dir_max']), 
+                    safe_int(row['preferred_swell_dir_min']),
+                    safe_int(row['preferred_swell_dir_max']),
+                    safe_int(row['bad_swell_dir_min']),  
+                    safe_int(row['bad_swell_dir_max']),  
                     row['wavecalc'],
                     row['region'],
-                    row['id']  # Use the id to identify the row to update
+                    row['reef'].lower() == 'true', 
+                    row['id']  
                 ))
 
-        # Commit changes and close the connection
         conn.commit()
         cur.close()
         conn.close()

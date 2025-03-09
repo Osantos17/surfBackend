@@ -10,6 +10,24 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
+# OVERRIDE LOCATIONS!!!!!!
+LOCATION_COORDINATE_OVERRIDES = {
+    516: {'latitude': 21.134398, 'longitude': -157.867200},  
+    
+}
+
+def apply_coordinate_overrides(location_data):
+    """
+    Applies coordinate overrides to a location's data if the location ID exists in the overrides dictionary.
+    """
+    location_id = location_data['id']
+    if location_id in LOCATION_COORDINATE_OVERRIDES:
+        override = LOCATION_COORDINATE_OVERRIDES[location_id]
+        location_data['latitude'] = override['latitude']
+        location_data['longitude'] = override['longitude']
+    return location_data
+
+
 def get_db_connection():
     try:
         DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -62,15 +80,20 @@ def get_locations():
     cursor.close()
     conn.close()
     
-    return jsonify([
-        {
+    # Apply coordinate overrides
+    overridden_locations = []
+    for row in locations:
+        location_data = {
             'id': row[0],
             'location_name': row[1],
             'region': row[2], 
             'latitude': row[3],
             'longitude': row[4]
-        } for row in locations
-    ])
+        }
+        location_data = apply_coordinate_overrides(location_data)
+        overridden_locations.append(location_data)
+    
+    return jsonify(overridden_locations)
 
 @app.route('/locations/<int:location_id>', methods=['GET'])
 def get_location_by_id(location_id):
@@ -80,7 +103,7 @@ def get_location_by_id(location_id):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Updated SQL query to include the 'reef' column
+        # Fetch location data
         cursor.execute('''
             SELECT id, location_name, latitude, longitude, 
                    preferred_wind_dir_min, preferred_wind_dir_max, 
@@ -88,7 +111,7 @@ def get_location_by_id(location_id):
                    bad_swell_dir_min, bad_swell_dir_max, 
                    wavecalc,
                    region,
-                   reef  -- <-- Add the 'reef' column here
+                   reef
             FROM locations 
             WHERE id = %s
         ''', (location_id,))
@@ -97,7 +120,7 @@ def get_location_by_id(location_id):
         if not location:
             return jsonify({'error': 'Location not found'}), 404
 
-        # Format the response and include wavecalc and reef
+        # Format the response
         location_data = {
             'id': location[0],
             'location_name': location[1],
@@ -113,6 +136,8 @@ def get_location_by_id(location_id):
             'region': location[11],
             'reef': location[12] 
         }
+
+        location_data = apply_coordinate_overrides(location_data)
 
         return jsonify(location_data)
 
@@ -184,7 +209,6 @@ def get_combined_data_by_id(location_id):
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Fetch location data including min/max wind and swell directions
         cursor.execute('''
             SELECT id, location_name, latitude, longitude, 
                    preferred_wind_dir_min, preferred_wind_dir_max, 
@@ -207,7 +231,8 @@ def get_combined_data_by_id(location_id):
             'preferred_swell_dir_max': location[7],
         }
 
-        # Fetch and attach surf data
+        combined_data = apply_coordinate_overrides(combined_data)
+
         if include_surf:
             cursor.execute('''
                 SELECT id, location_id, date, sunrise, sunset, time, tempF, windspeedMiles, winddirDegree, 
@@ -236,7 +261,6 @@ def get_combined_data_by_id(location_id):
                 for row in surf_data
             ]
 
-        # Fetch and attach tide data
         if include_tide:
             cursor.execute('''
                 SELECT id, location_id, tide_time, tide_height_mt, tide_type, tide_date

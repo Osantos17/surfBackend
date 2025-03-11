@@ -12,8 +12,32 @@ CORS(app)
 
 # OVERRIDE LOCATIONS!!!!!!
 LOCATION_COORDINATE_OVERRIDES = {
-    516: {'latitude': 21.134398, 'longitude': -157.867200},  
     
+    # !!!!MAUI!!!!!!
+    
+    432: {'latitude': 20.864631, 'longitude': -156.165437},  # Honomanu
+    454: {'latitude': 21.017501, 'longitude': -156.641494},  # Honolua Bay
+    456: {'latitude': 21.026671, 'longitude': -156.630644},  # WindMills
+    457: {'latitude': 21.037885, 'longitude': -156.61246},  # Honokohau
+
+    
+    # !!!!OAHU!!!!!!
+    
+    504: {'latitude': 21.284179, 'longitude': -157.67278},   # Sandy Beach
+    506: {'latitude': 21.255018, 'longitude': -157.794234},  # Black Point
+    508: {'latitude': 21.252854, 'longitude': -157.805273},  # Diamond
+    512: {'latitude': 21.26771, 'longitude': -157.824682},   # Publics
+    516: {'latitude': 21.272952, 'longitude': -157.831626},  # Waikiki
+    518: {'latitude': 21.272100, 'longitude': -157.832826},  # Populars
+    520: {'latitude': 21.275351, 'longitude': -157.833866},  # Threes
+    522: {'latitude': 21.276619, 'longitude': -157.83917},   # Fours
+    524: {'latitude': 21.276452, 'longitude': -157.841549},  # Kaisers
+    526: {'latitude': 21.281239, 'longitude': -157.845857},  # Bowls
+    528: {'latitude': 21.28576, 'longitude': -157.851543},   # Ala Moana
+    530: {'latitude': 21.299028, 'longitude': -157.875976},  # Sand Island
+    532: {'latitude': 21.299134, 'longitude': -157.999843},  # Ewa
+    532: {'latitude': 21.295539, 'longitude': -158.108118},  # Barbers
+
 }
 
 def apply_coordinate_overrides(location_data):

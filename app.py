@@ -13,6 +13,18 @@ CORS(app)
 # OVERRIDE LOCATIONS!!!!!!
 LOCATION_COORDINATE_OVERRIDES = {
     
+    # !!!!NORCAL!!!!
+    
+    82: {'latitude': 35.140084, 'longitude': -120.648873}, #Pismo Pier
+    
+    # !!!!SOCAL!!!!!!
+
+    232: {'latitude': 32.752517, 'longitude': -117.255807},  # Ocean Beach
+    233: {'latitude': 32.736865, 'longitude': -117.256585},  # Sunset Cliffs
+    234: {'latitude': 32.671926, 'longitude': -117.176946},  # Coronado
+    235: {'latitude': 32.576074, 'longitude': -117.136835},  # Imperial
+    236: {'latitude': 32.556276, 'longitude': -117.131519},  # TJ Slough
+    
     # !!!!MAUI!!!!!!
     
     432: {'latitude': 20.864631, 'longitude': -156.165437},  # Honomanu

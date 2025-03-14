@@ -35,6 +35,9 @@ LOCATION_COORDINATE_OVERRIDES = {
     
     # !!!!OAHU!!!!!!
     
+        # !!!!SOUTH SHORE!!!!!!
+
+    
     504: {'latitude': 21.284179, 'longitude': -157.67278},   # Sandy Beach
     506: {'latitude': 21.255018, 'longitude': -157.794234},  # Black Point
     508: {'latitude': 21.252854, 'longitude': -157.805273},  # Diamond
@@ -49,6 +52,25 @@ LOCATION_COORDINATE_OVERRIDES = {
     530: {'latitude': 21.299028, 'longitude': -157.875976},  # Sand Island
     532: {'latitude': 21.303515, 'longitude': -158.003105},  # Ewa
     532: {'latitude': 21.294911, 'longitude': -158.107460},  # Barbers
+    
+        # !!!!NORTH SHORE!!!!!!
+        
+    542: {'latitude': 21.595378, 'longitude': -158.108636},  # Hale'iwa
+    544: {'latitude': 21.61922, 'longitude': -158.087975},   # Laniakea
+    546: {'latitude': 21.622838, 'longitude': -158.084584},  # Jockos
+    548: {'latitude': 21.624339, 'longitude': -158.082737},  # Chuns
+    552: {'latitude': 21.659598, 'longitude': -158.059782},  # Log Cabins
+    554: {'latitude': 21.661639, 'longitude': -158.056826},  # Rockpile
+    556: {'latitude': 21.662891, 'longitude': -158.055381},  # Off The Wall
+    558: {'latitude': 21.663689, 'longitude': -158.054756},  # Backdoor
+    559: {'latitude': 21.664735, 'longitude': -158.053571},  # Pipeline
+    560: {'latitude': 21.667839, 'longitude': -158.050055},  # Chambers
+    562: {'latitude': 21.669923, 'longitude': -158.048039},  # Rocky Point
+    564: {'latitude': 21.679007, 'longitude': -158.04112},   # Sunset
+    566: {'latitude': 21.684658, 'longitude': -158.032643},  # Velzyland
+
+
+
 
 }
 

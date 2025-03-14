@@ -30,7 +30,7 @@ LOCATION_COORDINATE_OVERRIDES = {
     432: {'latitude': 20.864631, 'longitude': -156.165437},  # Honomanu
     454: {'latitude': 21.017501, 'longitude': -156.641494},  # Honolua Bay
     456: {'latitude': 21.026671, 'longitude': -156.630644},  # WindMills
-    457: {'latitude': 21.037885, 'longitude': -156.61246},  # Honokohau
+    457: {'latitude': 21.023738, 'longitude': -156.610418},  # Honokohau
 
     
     # !!!!OAHU!!!!!!
@@ -47,8 +47,8 @@ LOCATION_COORDINATE_OVERRIDES = {
     526: {'latitude': 21.281239, 'longitude': -157.845857},  # Bowls
     528: {'latitude': 21.28576, 'longitude': -157.851543},   # Ala Moana
     530: {'latitude': 21.299028, 'longitude': -157.875976},  # Sand Island
-    532: {'latitude': 21.299134, 'longitude': -157.999843},  # Ewa
-    532: {'latitude': 21.295539, 'longitude': -158.108118},  # Barbers
+    532: {'latitude': 21.303515, 'longitude': -158.003105},  # Ewa
+    532: {'latitude': 21.294911, 'longitude': -158.107460},  # Barbers
 
 }
 

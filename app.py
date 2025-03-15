@@ -16,6 +16,15 @@ LOCATION_COORDINATE_OVERRIDES = {
     # !!!!NORCAL!!!!
     
     82: {'latitude': 35.140084, 'longitude': -120.648873}, #Pismo Pier
+    37: {'latitude': 37.093246, 'longitude': -122.287327}, # Wadell Creek
+    44: {'latitude': 37.021895, 'longitude': -122.218943}, # Davenpot
+    46: {'latitude': 36.964932, 'longitude': -122.124943},  # Four Mile
+    48: {'latitude': 36.961068, 'longitude': -122.114400},  # Three Mile
+    50: {'latitude': 36.948915, 'longitude': -122.058742},  # Natural Bridges
+    52: {'latitude': 36.950311, 'longitude': -122.023602},  # Steamer Lane
+    54: {'latitude': 36.958880, 'longitude': -121.993297},  # Blacks Beach
+
+
     
     # !!!!SOCAL!!!!!!
 
@@ -50,8 +59,8 @@ LOCATION_COORDINATE_OVERRIDES = {
     526: {'latitude': 21.281239, 'longitude': -157.845857},  # Bowls
     528: {'latitude': 21.28576, 'longitude': -157.851543},   # Ala Moana
     530: {'latitude': 21.299028, 'longitude': -157.875976},  # Sand Island
-    532: {'latitude': 21.303515, 'longitude': -158.003105},  # Ewa
-    532: {'latitude': 21.294911, 'longitude': -158.107460},  # Barbers
+    532: {'latitude': 21.301940, 'longitude': -158.002802},  # Ewa
+    532: {'latitude': 21.294209, 'longitude': -158.108052},  # Barbers
     
         # !!!!NORTH SHORE!!!!!!
         

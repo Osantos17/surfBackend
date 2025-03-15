@@ -16,15 +16,6 @@ LOCATION_COORDINATE_OVERRIDES = {
     # !!!!NORCAL!!!!
     
     82: {'latitude': 35.140084, 'longitude': -120.648873}, #Pismo Pier
-    37: {'latitude': 37.093246, 'longitude': -122.287327}, # Wadell Creek
-    44: {'latitude': 37.021895, 'longitude': -122.218943}, # Davenpot
-    46: {'latitude': 36.964932, 'longitude': -122.124943},  # Four Mile
-    48: {'latitude': 36.961068, 'longitude': -122.114400},  # Three Mile
-    50: {'latitude': 36.948915, 'longitude': -122.058742},  # Natural Bridges
-    52: {'latitude': 36.950311, 'longitude': -122.023602},  # Steamer Lane
-    54: {'latitude': 36.958880, 'longitude': -121.993297},  # Blacks Beach
-
-
     
     # !!!!SOCAL!!!!!!
 

@@ -1,8 +1,8 @@
 "id","location_name","latitude","longitude","preferred_wind_dir_min","preferred_wind_dir_max","preferred_swell_dir_min","preferred_swell_dir_max","bad_swell_dir_min","bad_swell_dir_max","wavecalc","region","reef"
-46,"Four Mile",37.273692,-122.411419,250,65,150,240,320,90,1.01,"WestCoast",FALSE
-52,"Steamer Lane",37.273692,-122.411419,285,40,280,325,326,90,1.38,"WestCoast",FALSE
-37,"Wadell Creek",37.273692,-122.411419,30,90,170,264,350,90,1.12,"WestCoast",FALSE
+46,"Four Mile",36.964932,-122.124943,250,65,150,240,320,90,1.01,"WestCoast",FALSE
 238,"Baja Malibu",32.415937,-117.098174,50,70,,,,,1.37,"WestCoast",FALSE
+37,"Wadell Creek",37.093246,-122.287327,30,90,170,264,350,90,1.12,"WestCoast",FALSE
+52,"Steamer Lane",36.950311,-122.023602,285,40,280,325,326,90,1.38,"WestCoast",FALSE
 500,"Popoia",21.400539,-157.718024,180,260,1,110,140,325,1.78,"Oahu",TRUE
 434,"Hana Bay",20.759055,-155.98175,240,320,45,130,170,30,1.29,"Maui",FALSE
 130,"Malibu Third",34.029977,-118.682013,320,20,170,250,310,90,1.83,"WestCoast",FALSE
@@ -131,10 +131,10 @@
 64,"Boneyard",36.638395,-121.930963,130,190,270,350,90,260,1.08,"WestCoast",FALSE
 186,"Cottons",33.387597,-117.597722,40,100,180,230,330,90,0.97,"WestCoast",FALSE
 31,"Dunes",37.483413,-122.454467,35,95,,,,,1.23,"WestCoast",FALSE
-48,"Three Mile",37.273692,-122.411419,300,110,150,240,320,90,1.06,"WestCoast",FALSE
-50,"Natural Bridges",37.273692,-122.411419,315,15,185,230,310,90,1.11,"WestCoast",FALSE
-44,"Davenpot",37.273692,-122.411419,325,110,170,250,340,90,1.08,"WestCoast",FALSE
-54,"Blacks Beach",37.273692,-122.411419,350,125,190,260,320,90,2.33,"WestCoast",FALSE
+50,"Natural Bridges",36.948915,-122.058742,315,15,185,230,310,90,1.11,"WestCoast",FALSE
+48,"Three Mile",36.961068,-122.1144,300,110,150,240,320,90,1.06,"WestCoast",FALSE
+44,"Davenpot",37.021895,-122.218943,325,110,170,250,340,90,1.08,"WestCoast",FALSE
+54,"Blacks Beach",36.95888,-121.993297,350,125,190,260,320,90,2.33,"WestCoast",FALSE
 160,"Bolsa Chica",33.685834,-118.043069,20,80,,,315,90,1.16,"WestCoast",FALSE
 171,"Upper Jetties",33.621503,-117.946957,340,40,158,199,350,90,1.14,"WestCoast",FALSE
 60,"Manresa",36.923523,-121.863601,30,90,200,270,310,90,0.83,"WestCoast",FALSE

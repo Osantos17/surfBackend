@@ -15,8 +15,8 @@ LOCATION_COORDINATE_OVERRIDES = {
     
     # !!!!NORCAL!!!!
     
-    82: {'latitude': 35.140084, 'longitude': -120.648873},   #Pismo Pier
-    120: {'latitude': 34.150716, 'longitude': -119.222780},   #Silver Strand
+    82: {'latitude': 35.140084, 'longitude': -120.648873},   # Pismo Pier
+    120: {'latitude': 34.150716, 'longitude': -119.222780},  # Silver Strand
     122: {'latitude': 34.050536, 'longitude': -118.962325},  # County Line
     124: {'latitude': 34.042459, 'longitude': -118.932936},  # Leo Carillo
     126: {'latitude': 34.021161, 'longitude': -118.836077},  # Zuma
@@ -42,47 +42,7 @@ LOCATION_COORDINATE_OVERRIDES = {
     158: {'latitude': 33.738817, 'longitude': -118.113635},  # Seal Jetty  
     159: {'latitude': 33.735857, 'longitude': -118.103865},  # Seal Pier  
     160: {'latitude': 33.685834, 'longitude': -118.043069},  # Bolsa Chica  
-    162: {'latitude': 33.674095, 'longitude': -118.029508},  # HB Cliffs  
-    164: {'latitude': 33.666685, 'longitude': -118.018032},  # North HB  
-    166: {'latitude': 33.654771, 'longitude': -118.006915},  # HB Pier North  
-    167: {'latitude': 33.653410, 'longitude': -118.004380},  # HB Pier South  
-    170: {'latitude': 33.625937, 'longitude': -117.960014},  # River Jetties  
-    171: {'latitude': 33.621503, 'longitude': -117.946957},  # Upper Jetties  
-    174: {'latitude': 33.608097, 'longitude': -117.930840},  # Blackies  
-    176: {'latitude': 33.590719, 'longitude': -117.882676},  # The Wedge 
     
-    182: {'latitude': 33.477414, 'longitude': -117.723986},  # Salt Creek  
-    184: {'latitude': 33.417325, 'longitude': -117.620467},  # T-Street  
-    186: {'latitude': 33.387597, 'longitude': -117.597722},  # Cottons  
-    187: {'latitude': 33.381471, 'longitude': -117.590188},  # Upper Trestles  
-    188: {'latitude': 33.379521, 'longitude': -117.587032},  # Lower Trestles  
-    190: {'latitude': 33.379456, 'longitude': -117.577720},  # Church  
-    
-    192: {'latitude': 33.202115, 'longitude': -117.394608},  # O'side Harbor  
-    193: {'latitude': 33.193869, 'longitude': -117.387461},  # O'side Pier  
-    198: {'latitude': 33.085983, 'longitude': -117.313915},  # Ponto  
-    200: {'latitude': 33.076462, 'longitude': -117.310942},  # Grandview  
-    204: {'latitude': 33.047037, 'longitude': -117.298923},  # Moonlight  
-    205: {'latitude': 33.045603, 'longitude': -117.298806},  # D-Street  
-    214: {'latitude': 32.974702, 'longitude': -117.271754},  # River Mouth  
-    216: {'latitude': 32.959215, 'longitude': -117.270007},  # Del Mar  
-    222: {'latitude': 32.865790, 'longitude': -117.256182},  # Scripps  
-    223: {'latitude': 32.862438, 'longitude': -117.257255},  # La Jolla Shores  
-    
-    224: {'latitude': 32.837644, 'longitude': -117.283237},  # Horseshoe  
-    225: {'latitude': 32.828840, 'longitude': -117.282006},  # Windansea  
-    226: {'latitude': 32.812708, 'longitude': -117.272829},  # Birdrock  
-    228: {'latitude': 32.806747, 'longitude': -117.268053},  # PB Point  
-    229: {'latitude': 32.805742, 'longitude': -117.263897},  # Old Man's  
-    230: {'latitude': 32.796551, 'longitude': -117.258164},  # Pacific Beach  
-    231: {'latitude': 32.771143, 'longitude': -117.255081},  # Mission  
-    
-    
-    232: {'latitude': 32.752517, 'longitude': -117.255807},  # Ocean Beach
-    233: {'latitude': 32.736865, 'longitude': -117.256585},  # Sunset Cliffs
-    234: {'latitude': 32.671926, 'longitude': -117.176946},  # Coronado
-    235: {'latitude': 32.576074, 'longitude': -117.136835},  # Imperial
-    236: {'latitude': 32.556276, 'longitude': -117.131519},  # TJ Slough
     
     # !!!!MAUI!!!!!!
     

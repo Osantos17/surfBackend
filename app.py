@@ -44,6 +44,38 @@ LOCATION_COORDINATE_OVERRIDES = {
     160: {'latitude': 33.685834, 'longitude': -118.043069},  # Bolsa Chica  
     
     
+    # 196: {'latitude': 33.149220, 'longitude': -117.350580},  # Tamarack  
+    # 198: {'latitude': 33.085983, 'longitude': -117.313915},  # Ponto  
+    # 200: {'latitude': 33.076462, 'longitude': -117.310942},  # Grandview  
+    # 202: {'latitude': 33.065375, 'longitude': -117.307658},  # Beacons  
+    # 204: {'latitude': 33.047037, 'longitude': -117.298923},  # Moonlight  
+    # 205: {'latitude': 33.045603, 'longitude': -117.298806},  # D-Street 
+    
+     
+    # 206: {'latitude': 33.033844, 'longitude': -117.295402},  # Swami's  
+    # 208: {'latitude': 33.024358, 'longitude': -117.289884},  # Pipes  
+    # 210: {'latitude': 33.013240, 'longitude': -117.283262},  # Cardiff Reef  
+    # 212: {'latitude': 33.001681, 'longitude': -117.282118},  # Seaside Reef  
+    # 214: {'latitude': 32.974702, 'longitude': -117.271754},  # River Mouth  
+    # 216: {'latitude': 32.959215, 'longitude': -117.270007},  # Del Mar  
+    # 218: {'latitude': 32.926921, 'longitude': -117.261348},  # Torrey Pines  
+    # 220: {'latitude': 32.883053, 'longitude': -117.256193},  # Blacks  
+    # 222: {'latitude': 32.865790, 'longitude': -117.256182},  # Scripps  
+    # 223: {'latitude': 32.862438, 'longitude': -117.257255},  # La Jolla  
+    # 224: {'latitude': 32.837644, 'longitude': -117.283237},  # Horseshoe  
+    # 225: {'latitude': 32.828840, 'longitude': -117.282006},  # Windansea  
+    # 226: {'latitude': 32.812708, 'longitude': -117.272829},  # Birdrock  
+    # 228: {'latitude': 32.806747, 'longitude': -117.268053},  # PB Point  
+    # 229: {'latitude': 32.805742, 'longitude': -117.263897},  # Old Man's    
+    # 231: {'latitude': 32.771143, 'longitude': -117.255081},  # Mission  
+    # 232: {'latitude': 32.752517, 'longitude': -117.255807},  # Ocean Beach  
+    # 233: {'latitude': 32.736865, 'longitude': -117.256585},  # Sunset Cliffs  
+    # 234: {'latitude': 32.671926, 'longitude': -117.176946},  # Coronado  
+    # 235: {'latitude': 32.576074, 'longitude': -117.136835},  # Imperial  
+    # 236: {'latitude': 32.556276, 'longitude': -117.131519},  # TJ Slough  
+
+    
+    
     # !!!!MAUI!!!!!!
     
     432: {'latitude': 20.864631, 'longitude': -156.165437},  # Honomanu

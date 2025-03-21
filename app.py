@@ -15,33 +15,33 @@ LOCATION_COORDINATE_OVERRIDES = {
     
     # !!!!NORCAL!!!!
     
-    82: {'latitude': 35.140084, 'longitude': -120.648873},   # Pismo Pier
-    120: {'latitude': 34.150716, 'longitude': -119.222780},  # Silver Strand
-    122: {'latitude': 34.050536, 'longitude': -118.962325},  # County Line
-    124: {'latitude': 34.042459, 'longitude': -118.932936},  # Leo Carillo
-    126: {'latitude': 34.021161, 'longitude': -118.836077},  # Zuma
-    128: {'latitude': 34.001130, 'longitude': -118.803039},  # Point Dume
+    # 82: {'latitude': 35.140084, 'longitude': -120.648873},   # Pismo Pier
+    # 120: {'latitude': 34.150716, 'longitude': -119.222780},  # Silver Strand
+    # 122: {'latitude': 34.050536, 'longitude': -118.962325},  # County Line
+    # 124: {'latitude': 34.042459, 'longitude': -118.932936},  # Leo Carillo
+    # 126: {'latitude': 34.021161, 'longitude': -118.836077},  # Zuma
+    # 128: {'latitude': 34.001130, 'longitude': -118.803039},  # Point Dume
     
  
     
-    # !!!!SOCAL!!!!!!
-    130: {'latitude': 34.029977, 'longitude': -118.682013},  # Malibu Third  
-    132: {'latitude': 34.035291, 'longitude': -118.676746},  # Malibu First  
-    134: {'latitude': 34.036762, 'longitude': -118.583300},  # Topanga  
-    136: {'latitude': 34.038276, 'longitude': -118.551078},  # Sunset  
-    138: {'latitude': 34.006789, 'longitude': -118.501193},  # Santa Monica  
-    140: {'latitude': 33.982061, 'longitude': -118.476099},  # Venice  
-    142: {'latitude': 33.905866, 'longitude': -118.425485},  # El Porto  
-    144: {'latitude': 33.878758, 'longitude': -118.412798},  # Manhattan  
-    146: {'latitude': 33.867762, 'longitude': -118.408967},  # Hermosa  
-    148: {'latitude': 33.851055, 'longitude': -118.402478},  # Breakwater  
-    150: {'latitude': 33.817519, 'longitude': -118.392793},  # Burnout  
-    152: {'latitude': 33.813173, 'longitude': -118.393727},  # Torrance  
-    154: {'latitude': 33.771528, 'longitude': -118.426192},  # Lunada Bay 
-    156: {'latitude': 33.706295, 'longitude': -118.283482},  # Cabrillo  
-    158: {'latitude': 33.738817, 'longitude': -118.113635},  # Seal Jetty  
-    159: {'latitude': 33.735857, 'longitude': -118.103865},  # Seal Pier  
-    160: {'latitude': 33.685834, 'longitude': -118.043069},  # Bolsa Chica  
+    # # !!!!SOCAL!!!!!!
+    # 130: {'latitude': 34.029977, 'longitude': -118.682013},  # Malibu Third  
+    # 132: {'latitude': 34.035291, 'longitude': -118.676746},  # Malibu First  
+    # 134: {'latitude': 34.036762, 'longitude': -118.583300},  # Topanga  
+    # 136: {'latitude': 34.038276, 'longitude': -118.551078},  # Sunset  
+    # 138: {'latitude': 34.006789, 'longitude': -118.501193},  # Santa Monica  
+    # 140: {'latitude': 33.982061, 'longitude': -118.476099},  # Venice  
+    # 142: {'latitude': 33.905866, 'longitude': -118.425485},  # El Porto  
+    # 144: {'latitude': 33.878758, 'longitude': -118.412798},  # Manhattan  
+    # 146: {'latitude': 33.867762, 'longitude': -118.408967},  # Hermosa  
+    # 148: {'latitude': 33.851055, 'longitude': -118.402478},  # Breakwater  
+    # 150: {'latitude': 33.817519, 'longitude': -118.392793},  # Burnout  
+    # 152: {'latitude': 33.813173, 'longitude': -118.393727},  # Torrance  
+    # 154: {'latitude': 33.771528, 'longitude': -118.426192},  # Lunada Bay 
+    # 156: {'latitude': 33.706295, 'longitude': -118.283482},  # Cabrillo  
+    # 158: {'latitude': 33.738817, 'longitude': -118.113635},  # Seal Jetty  
+    # 159: {'latitude': 33.735857, 'longitude': -118.103865},  # Seal Pier  
+    # 160: {'latitude': 33.685834, 'longitude': -118.043069},  # Bolsa Chica  
     
     
     # 196: {'latitude': 33.149220, 'longitude': -117.350580},  # Tamarack  

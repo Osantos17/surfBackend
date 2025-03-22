@@ -16,7 +16,11 @@ LOCATION_COORDINATE_OVERRIDES = {
     # !!!!NORCAL!!!!
     
     # 82: {'latitude': 35.140084, 'longitude': -120.648873},   # Pismo Pier
-    # 120: {'latitude': 34.150716, 'longitude': -119.222780},  # Silver Strand
+    
+    106: {'latitude': 34.329648, 'longitude': -119.405961},  # Faria
+    108: {'latitude': 34.317135, 'longitude': -119.374548},  # Mondos
+    110: {'latitude': 34.306946, 'longitude': -119.359833},  # Solimar
+    120: {'latitude': 34.150716, 'longitude': -119.222780},  # Silver Strand
     # 122: {'latitude': 34.050536, 'longitude': -118.962325},  # County Line
     # 124: {'latitude': 34.042459, 'longitude': -118.932936},  # Leo Carillo
     # 126: {'latitude': 34.021161, 'longitude': -118.836077},  # Zuma
@@ -58,8 +62,14 @@ LOCATION_COORDINATE_OVERRIDES = {
     # 212: {'latitude': 33.001681, 'longitude': -117.282118},  # Seaside Reef  
     # 214: {'latitude': 32.974702, 'longitude': -117.271754},  # River Mouth  
     # 216: {'latitude': 32.959215, 'longitude': -117.270007},  # Del Mar  
-    218: {'latitude': 32.926921, 'longitude': -117.261348},  # Torrey Pines  
-    220: {'latitude': 32.883053, 'longitude': -117.256193},  # Blacks  
+    
+    
+    218: {'latitude': 32.926921, 'longitude': -117.261348},  # Torrey Pines!!!!  
+    
+    
+    220: {'latitude': 32.883053, 'longitude': -117.256193},  # Blacks!!!!!!  
+    
+    
     222: {'latitude': 32.865790, 'longitude': -117.256182},  # Scripps  
     223: {'latitude': 32.862438, 'longitude': -117.257255},  # La Jolla  
     224: {'latitude': 32.837644, 'longitude': -117.283237},  # Horseshoe  
@@ -70,9 +80,9 @@ LOCATION_COORDINATE_OVERRIDES = {
     # 231: {'latitude': 32.771143, 'longitude': -117.255081},  # Mission  
     232: {'latitude': 32.752517, 'longitude': -117.255807},  # Ocean Beach  
     233: {'latitude': 32.736865, 'longitude': -117.256585},  # Sunset Cliffs  
-    234: {'latitude': 32.671926, 'longitude': -117.176946},  # Coronado  
-    235: {'latitude': 32.576074, 'longitude': -117.136835},  # Imperial  
-    236: {'latitude': 32.556276, 'longitude': -117.131519},  # TJ Slough  
+    # 234: {'latitude': 32.671926, 'longitude': -117.176946},  # Coronado  
+    # 235: {'latitude': 32.576074, 'longitude': -117.136835},  # Imperial  
+    # 236: {'latitude': 32.556276, 'longitude': -117.131519},  # TJ Slough  
 
     
     

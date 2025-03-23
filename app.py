@@ -64,10 +64,10 @@ LOCATION_COORDINATE_OVERRIDES = {
     # 216: {'latitude': 32.959215, 'longitude': -117.270007},  # Del Mar  
     
     
-    218: {'latitude': 32.926921, 'longitude': -117.261348},  # Torrey Pines!!!!  
+    218: {'latitude': 32.926921, 'longitude': -117.261348},  # Torrey Pines
     
     
-    220: {'latitude': 32.883053, 'longitude': -117.256193},  # Blacks!!!!!!  
+    220: {'latitude': 32.883053, 'longitude': -117.256193},  # Blacks
     
     
     222: {'latitude': 32.865790, 'longitude': -117.256182},  # Scripps  

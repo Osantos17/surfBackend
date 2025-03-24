@@ -92,6 +92,7 @@ LOCATION_COORDINATE_OVERRIDES = {
     454: {'latitude': 21.017501, 'longitude': -156.641494},  # Honolua Bay
     456: {'latitude': 21.026671, 'longitude': -156.630644},  # WindMills
     457: {'latitude': 21.023738, 'longitude': -156.610418},  # Honokohau
+    463: {'latitude': 20.937247, 'longitude': -156.354435},  # Pavillions
 
     
     # !!!!OAHU!!!!!!

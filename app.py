@@ -132,6 +132,10 @@ LOCATION_COORDINATE_OVERRIDES = {
     566: {'latitude': 21.684658, 'longitude': -158.032643},  # Velzyland
 
 
+     # !!!!KAUAI!!!!!!
+     
+    
+
 
 
 }

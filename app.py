@@ -113,7 +113,7 @@ LOCATION_COORDINATE_OVERRIDES = {
     528: {'latitude': 21.28576, 'longitude': -157.851543},   # Ala Moana
     530: {'latitude': 21.299028, 'longitude': -157.875976},  # Sand Island
     532: {'latitude': 21.301940, 'longitude': -158.002802},  # Ewa
-    532: {'latitude': 21.294990, 'longitude': -158.106747},  # Barbers
+    534: {'latitude': 21.294790, 'longitude': -158.106832},  # Barbers
     
         # !!!!NORTH SHORE!!!!!!
         

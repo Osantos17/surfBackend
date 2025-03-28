@@ -15,77 +15,37 @@ LOCATION_COORDINATE_OVERRIDES = {
     
     # !!!!NORCAL!!!!
     
-    # 82: {'latitude': 35.140084, 'longitude': -120.648873},   # Pismo Pier
-    
     106: {'latitude': 34.329648, 'longitude': -119.405961},  # Faria
     108: {'latitude': 34.317135, 'longitude': -119.374548},  # Mondos
     110: {'latitude': 34.306946, 'longitude': -119.359833},  # Solimar
     120: {'latitude': 34.150716, 'longitude': -119.222780},  # Silver Strand
-    # 122: {'latitude': 34.050536, 'longitude': -118.962325},  # County Line
-    # 124: {'latitude': 34.042459, 'longitude': -118.932936},  # Leo Carillo
-    # 126: {'latitude': 34.021161, 'longitude': -118.836077},  # Zuma
-    # 128: {'latitude': 34.001130, 'longitude': -118.803039},  # Point Dume
     
  
     
-    # # !!!!SOCAL!!!!!!
-    # 130: {'latitude': 34.029977, 'longitude': -118.682013},  # Malibu Third  
-    # 132: {'latitude': 34.035291, 'longitude': -118.676746},  # Malibu First  
-    # 134: {'latitude': 34.036762, 'longitude': -118.583300},  # Topanga  
-    # 136: {'latitude': 34.038276, 'longitude': -118.551078},  # Sunset  
-    # 138: {'latitude': 34.006789, 'longitude': -118.501193},  # Santa Monica  
-    # 140: {'latitude': 33.982061, 'longitude': -118.476099},  # Venice  
-    # 142: {'latitude': 33.905866, 'longitude': -118.425485},  # El Porto  
-    # 144: {'latitude': 33.878758, 'longitude': -118.412798},  # Manhattan  
-    # 146: {'latitude': 33.867762, 'longitude': -118.408967},  # Hermosa  
-    # 148: {'latitude': 33.851055, 'longitude': -118.402478},  # Breakwater  
-    # 150: {'latitude': 33.817519, 'longitude': -118.392793},  # Burnout  
-    # 152: {'latitude': 33.813173, 'longitude': -118.393727},  # Torrance  
-    # 154: {'latitude': 33.771528, 'longitude': -118.426192},  # Lunada Bay 
-    # 156: {'latitude': 33.706295, 'longitude': -118.283482},  # Cabrillo  
-    # 158: {'latitude': 33.738817, 'longitude': -118.113635},  # Seal Jetty  
-    # 159: {'latitude': 33.735857, 'longitude': -118.103865},  # Seal Pier  
-    # 160: {'latitude': 33.685834, 'longitude': -118.043069},  # Bolsa Chica  
-    
-    
-    # 196: {'latitude': 33.149220, 'longitude': -117.350580},  # Tamarack  
-    # 198: {'latitude': 33.085983, 'longitude': -117.313915},  # Ponto  
-    # 200: {'latitude': 33.076462, 'longitude': -117.310942},  # Grandview  
-    # 202: {'latitude': 33.065375, 'longitude': -117.307658},  # Beacons  
-    # 204: {'latitude': 33.047037, 'longitude': -117.298923},  # Moonlight  
-    # 205: {'latitude': 33.045603, 'longitude': -117.298806},  # D-Street 
-    
-     
-    # 206: {'latitude': 33.033844, 'longitude': -117.295402},  # Swami's  
-    # 208: {'latitude': 33.024358, 'longitude': -117.289884},  # Pipes  
-    # 210: {'latitude': 33.013240, 'longitude': -117.283262},  # Cardiff Reef  
-    # 212: {'latitude': 33.001681, 'longitude': -117.282118},  # Seaside Reef  
-    # 214: {'latitude': 32.974702, 'longitude': -117.271754},  # River Mouth  
-    # 216: {'latitude': 32.959215, 'longitude': -117.270007},  # Del Mar  
+    #  !!!!SOCAL!!!!!!
     
     
     218: {'latitude': 32.926921, 'longitude': -117.261348},  # Torrey Pines
-    
-    
     220: {'latitude': 32.883053, 'longitude': -117.256193},  # Blacks
-    
-    
     222: {'latitude': 32.865790, 'longitude': -117.256182},  # Scripps  
     223: {'latitude': 32.862438, 'longitude': -117.257255},  # La Jolla  
     224: {'latitude': 32.837644, 'longitude': -117.283237},  # Horseshoe  
-    # 225: {'latitude': 32.828840, 'longitude': -117.282006},  # Windansea  
-    # 226: {'latitude': 32.812708, 'longitude': -117.272829},  # Birdrock  
-    # 228: {'latitude': 32.806747, 'longitude': -117.268053},  # PB Point  
-    # 229: {'latitude': 32.805742, 'longitude': -117.263897},  # Old Man's    
-    # 231: {'latitude': 32.771143, 'longitude': -117.255081},  # Mission  
     232: {'latitude': 32.752517, 'longitude': -117.255807},  # Ocean Beach  
-    233: {'latitude': 32.736865, 'longitude': -117.256585},  # Sunset Cliffs  
-    # 234: {'latitude': 32.671926, 'longitude': -117.176946},  # Coronado  
-    # 235: {'latitude': 32.576074, 'longitude': -117.136835},  # Imperial  
-    # 236: {'latitude': 32.556276, 'longitude': -117.131519},  # TJ Slough  
+    233: {'latitude': 32.736865, 'longitude': -117.256585},  # Sunset Cliffs   
+    
+    
+    # !!!!MEXICO!!!!!!
+    
+    
+    268: {'latitude': 32.056660, 'longitude': -116.884037},  # La Salina  
+    269: {'latitude': 32.035890, 'longitude': -116.886783},  # El Paso  
+    271: {'latitude': 31.975145, 'longitude': -116.790638},  # Salsipuedes  
+    272: {'latitude': 31.899349, 'longitude': -116.731289},  # San Miguel  
+    273: {'latitude': 31.877028, 'longitude': -116.688175},  # 3Ms  
+    274: {'latitude': 31.869540, 'longitude': -116.679793},  # Stacks  
 
-    
-    
+
+        
     # !!!!MAUI!!!!!!
     
     432: {'latitude': 20.864631, 'longitude': -156.165437},  # Honomanu
@@ -132,7 +92,7 @@ LOCATION_COORDINATE_OVERRIDES = {
     566: {'latitude': 21.684658, 'longitude': -158.032643},  # Velzyland
 
 
-     # !!!!KAUAI!!!!!!
+     
      
     
 

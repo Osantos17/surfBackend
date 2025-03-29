@@ -42,7 +42,11 @@ LOCATION_COORDINATE_OVERRIDES = {
     271: {'latitude': 31.975145, 'longitude': -116.790638},  # Salsipuedes  
     272: {'latitude': 31.899349, 'longitude': -116.731289},  # San Miguel  
     273: {'latitude': 31.877028, 'longitude': -116.688175},  # 3Ms  
-    274: {'latitude': 31.869540, 'longitude': -116.679793},  # Stacks  
+    274: {'latitude': 31.869540, 'longitude': -116.679793},  # Stacks 
+    277: {'latitude': 31.462509, 'longitude': -116.589201},  # Light House  
+    278: {'latitude': 31.328248, 'longitude': -116.455489},  # Punta Cabras  
+    280: {'latitude': 30.855740, 'longitude': -116.171328},  # 4 Casas  
+ 
 
 
         

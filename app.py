@@ -46,6 +46,8 @@ LOCATION_COORDINATE_OVERRIDES = {
     # 277: {'latitude': 31.462509, 'longitude': -116.589201},  # Light House  
     # 278: {'latitude': 31.328248, 'longitude': -116.455489},  # Punta Cabras  
     # 280: {'latitude': 30.855740, 'longitude': -116.171328},  # 4 Casas  
+    # 308: {'latitude': 22.895806, 'longitude': -109.868477},  # Monuments  
+
  
 
 

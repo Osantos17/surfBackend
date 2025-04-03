@@ -31,7 +31,19 @@ LOCATION_COORDINATE_OVERRIDES = {
     223: {'latitude': 32.862438, 'longitude': -117.257255},  # La Jolla  
     224: {'latitude': 32.837644, 'longitude': -117.283237},  # Horseshoe  
     232: {'latitude': 32.752517, 'longitude': -117.255807},  # Ocean Beach  
-    233: {'latitude': 32.736865, 'longitude': -117.256585},  # Sunset Cliffs   
+    233: {'latitude': 32.736865, 'longitude': -117.256585},  # Sunset Cliffs 
+    # 198: {'latitude': 33.085983, 'longitude': -117.313915},  # Ponto  
+    # 200: {'latitude': 33.076462, 'longitude': -117.310942},  # Grandview  
+    # 202: {'latitude': 33.065375, 'longitude': -117.307658},  # Beacons  
+    # 204: {'latitude': 33.047037, 'longitude': -117.298923},  # Moonlight  
+    # 205: {'latitude': 33.045603, 'longitude': -117.298806},  # D-Street  
+    # 206: {'latitude': 33.033844, 'longitude': -117.295402},  # Swami's  
+    # 208: {'latitude': 33.024358, 'longitude': -117.289884},  # Pipes  
+    210: {'latitude': 33.013240, 'longitude': -117.283262},  # Cardiff Reef  
+    212: {'latitude': 33.001681, 'longitude': -117.282118},  # Seaside Reef  
+    214: {'latitude': 32.974702, 'longitude': -117.271754},  # River Mouth  
+
+  
     
     
     # !!!!MEXICO!!!!!!

@@ -67,10 +67,18 @@ LOCATION_COORDINATE_OVERRIDES = {
     # !!!!MAUI!!!!!!
     
     432: {'latitude': 20.864631, 'longitude': -156.165437},  # Honomanu
+   
+    436: {'latitude': 20.590686, 'longitude': -156.414735},  # Perouse Bay  
+    437: {'latitude': 20.612308, 'longitude': -156.437565},  # Dumps  
+    439: {'latitude': 20.634524, 'longitude': -156.452177},  # Little Beach  
+    441: {'latitude': 20.727902, 'longitude': -156.451735},  # The Cove  
+
     454: {'latitude': 21.017501, 'longitude': -156.641494},  # Honolua Bay
     456: {'latitude': 21.026671, 'longitude': -156.630644},  # WindMills
     457: {'latitude': 21.023738, 'longitude': -156.610418},  # Honokohau
     463: {'latitude': 20.937247, 'longitude': -156.354435},  # Pavillions
+    
+    
 
     
     # !!!!OAHU!!!!!!
@@ -108,13 +116,6 @@ LOCATION_COORDINATE_OVERRIDES = {
     562: {'latitude': 21.669923, 'longitude': -158.048039},  # Rocky Point
     564: {'latitude': 21.679007, 'longitude': -158.04112},   # Sunset
     566: {'latitude': 21.684658, 'longitude': -158.032643},  # Velzyland
-
-
-     
-     
-    
-
-
 
 }
 
